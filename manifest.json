@@ -1,0 +1,15 @@
+{
+  "name": "Maybell Staff Performance",
+  "short_name": "Staff Perf",
+  "description": "Maybell Staff-Wise Sales Performance Dashboard — target vs achieved, staff & store matrices, weekly and category charts.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F4F6F8",
+  "theme_color": "#12395B",
+  "icons": [
+    { "src": "staff-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "staff-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
