@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Store Performance Dashboard" />
+<title>Store Performance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1>Store Performance Dashboard</h1>
+      <p class="hero-sub"><span id="fyLabel"></span> &bull; <span id="monthMeta"></span> &bull; Target vs Achievement &bull; <span id="growthMeta"></span> &bull; Store KPIs</p>
+    </div>
+    <button id="refreshBtn" class="btn-update">Update Data</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="filter-bar">
+    <div class="filter">
+      <label for="monthSelect">Month</label>
+      <select id="monthSelect"></select>
+    </div>
+    <div class="filter">
+      <label for="categorySelect">Category</label>
+      <select id="categorySelect"></select>
+    </div>
+    <div class="filter-status">
+      <div id="pulse" class="pulse pulse-loading"><span class="pulse-dot"></span><span class="pulse-text">Connecting&hellip;</span></div>
+    </div>
+  </section>
+
+  <!-- CATEGORY (STORE TYPE) COMPARISON -->
+  <section class="panel">
+    <h2>Category Comparison &mdash; Year to Date</h2>
+    <p class="panel-sub" id="catCompSub">Cumulative Apr &rarr; <span id="catCompMonth"></span>, regardless of the category filter above</p>
+    <div class="table-scroll">
+      <table class="comp-table">
+        <thead><tr id="catCompHead"></tr></thead>
+        <tbody id="catCompBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- THIS MONTH -->
+  <section class="panel">
+    <h2>This Month &mdash; <span id="monthCardTitle"></span></h2>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Target</div><div class="kpi-value" id="monthTarget">&mdash;</div><div class="kpi-sub" id="monthTargetSub">this month target</div></div>
+      <div class="kpi-card"><div class="kpi-label">Achieved</div><div class="kpi-value" id="monthAchieved">&mdash;</div><div class="kpi-sub">Net sales</div></div>
+      <div class="kpi-card"><div class="kpi-label">Achievement %</div><div class="kpi-value" id="monthAchievement">&mdash;</div><div class="kpi-sub">vs target</div></div>
+      <div class="kpi-card"><div class="kpi-label">Previous Sales</div><div class="kpi-value" id="monthPrevious">&mdash;</div><div class="kpi-sub" id="monthPrevSub">prior year</div></div>
+      <div class="kpi-card"><div class="kpi-label">Growth %</div><div class="kpi-value" id="monthGrowth">&mdash;</div><div class="kpi-sub">vs prior year</div></div>
+      <div class="kpi-card"><div class="kpi-label">Like-for-Like Growth</div><div class="kpi-value" id="monthL2L">&mdash;</div><div class="kpi-sub" id="monthL2LSub"></div></div>
+    </div>
+    <p class="empty-note" id="monthNote"></p>
+  </section>
+
+  <!-- YTD -->
+  <section class="panel">
+    <h2>Year to Date &mdash; Apr to <span id="ytdCardTitle"></span></h2>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Target</div><div class="kpi-value" id="ytdTarget">&mdash;</div><div class="kpi-sub">Apr&ndash;<span id="ytdTargetSub"></span> target</div></div>
+      <div class="kpi-card"><div class="kpi-label">Achieved</div><div class="kpi-value" id="ytdAchieved">&mdash;</div><div class="kpi-sub">Net sales</div></div>
+      <div class="kpi-card"><div class="kpi-label">Achievement %</div><div class="kpi-value" id="ytdAchievement">&mdash;</div><div class="kpi-sub">vs target</div></div>
+      <div class="kpi-card"><div class="kpi-label">Previous Sales</div><div class="kpi-value" id="ytdPrevious">&mdash;</div><div class="kpi-sub">prior year</div></div>
+      <div class="kpi-card"><div class="kpi-label">Growth %</div><div class="kpi-value" id="ytdGrowth">&mdash;</div><div class="kpi-sub">vs prior year</div></div>
+      <div class="kpi-card"><div class="kpi-label">Like-for-Like Growth</div><div class="kpi-value" id="ytdL2L">&mdash;</div><div class="kpi-sub" id="ytdL2LSub"></div></div>
+    </div>
+    <p class="empty-note" id="ytdNote"></p>
+    <p class="banner" id="ytdBanner"></p>
+  </section>
+
+  <!-- MONTH PERFORMANCE -->
+  <section class="panel">
+    <div class="panel-head-row">
+      <h2 id="monthSectionTitle">Month Performance</h2>
+      <span class="panel-note" id="monthCount"></span>
+    </div>
+    <div class="toggle-row">
+      <button class="toggle-btn" data-month-view="target">Target vs Achievement</button>
+      <button class="toggle-btn active" data-month-view="growth">LY vs CY Growth</button>
+      <button class="toggle-btn" data-month-view="combined">Combined View</button>
+    </div>
+    <div class="toggle-row">
+      <button class="chip-btn" data-month-scope="l2l">Like-for-like stores only (this month)</button>
+      <button class="chip-btn active" data-month-scope="all">All stores (incl. new/closed)</button>
+    </div>
+    <input type="text" id="monthSearch" class="search-input" placeholder="Search store&hellip;" />
+    <div class="table-scroll">
+      <table class="store-table">
+        <thead><tr id="monthHead"></tr></thead>
+        <tbody id="monthBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- YTD PERFORMANCE -->
+  <section class="panel">
+    <div class="panel-head-row">
+      <h2 id="ytdSectionTitle">YTD Performance</h2>
+      <span class="panel-note" id="ytdCount"></span>
+    </div>
+    <div class="toggle-row">
+      <button class="toggle-btn" data-ytd-view="target">Target vs Achievement</button>
+      <button class="toggle-btn active" data-ytd-view="growth">LY vs CY Growth</button>
+      <button class="toggle-btn" data-ytd-view="combined">Combined View</button>
+    </div>
+    <div class="toggle-row">
+      <button class="chip-btn active" data-ytd-scope="l2l">Like-for-like stores only (overlapping months)</button>
+      <button class="chip-btn" data-ytd-scope="all">All stores (incl. new/closed)</button>
+    </div>
+    <input type="text" id="ytdSearch" class="search-input" placeholder="Search store&hellip;" />
+    <div class="table-scroll">
+      <table class="store-table">
+        <thead><tr id="ytdHead"></tr></thead>
+        <tbody id="ytdBody"></tbody>
+      </table>
+    </div>
+
+    <div class="growth-chart-head">
+      <div class="growth-legend"><span class="legend-dot pos"></span>Growth <span class="legend-dot neg"></span>Decline</div>
+      <button id="growthChartToggle" class="ghost-btn-sm">Hide chart</button>
+    </div>
+    <div id="growthChartWrap"><div id="growthChartBody" class="growth-chart"></div></div>
+  </section>
+
+  <!-- STAFF PERFORMANCE -->
+  <section class="panel" id="staffPanel" hidden>
+    <h2>Staff Performance</h2>
+    <p class="panel-sub" id="staffSubtitle"></p>
+    <div class="filter">
+      <label for="staffStoreSelect">Store</label>
+      <select id="staffStoreSelect"></select>
+    </div>
+    <div id="staffTableWrap"></div>
+
+    <div class="growth-chart-head">
+      <h3>Week-on-Week Performance</h3>
+      <button id="weekChartToggle" class="ghost-btn-sm">Hide chart</button>
+    </div>
+    <p class="panel-sub" id="weekChartNote"></p>
+    <div id="weekChartWrap"><canvas id="weekChart" height="260"></canvas></div>
+  </section>
+
+  <footer>
+    Store Performance Dashboard &mdash; <span id="footerUpdated"></span>
+  </footer>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
