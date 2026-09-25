@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Store Performance Dashboard</title>
+<style>
+  :root{
+    --navy:#1b2559; --navy-light:#2a3570; --accent:#5b6fe0;
+    --green:#1a9c5e; --red:#d3453f; --bg:#f4f5fa; --card:#ffffff;
+    --border:#e3e6f0; --text:#1b2559; --muted:#6b7290;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Cambria,Georgia,"Times New Roman",serif;background:var(--bg);color:var(--text);}
+  header{background:linear-gradient(135deg,var(--navy),var(--navy-light));color:#fff;padding:28px 32px;
+    display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;}
+  header h1{margin:0 0 6px;font-size:26px;}
+  header p{margin:0;opacity:.8;font-size:13px;}
+  header button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;
+    padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13px;}
+  header button:hover{background:rgba(255,255,255,.25);}
+  main{max-width:1200px;margin:0 auto;padding:24px 20px 60px;}
+  .filters{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px 22px;
+    display:flex;gap:32px;margin-bottom:26px;flex-wrap:wrap;}
+  .filters label{display:block;font-size:11px;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;text-transform:uppercase;}
+  .filters select{padding:7px 10px;border:1px solid var(--border);border-radius:5px;font-size:14px;min-width:140px;}
+  h2{font-size:19px;margin:0 0 4px;color:var(--navy);}
+  .sub{font-size:12.5px;color:var(--muted);margin:0 0 14px;}
+  section{margin-bottom:38px;}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  thead th{background:var(--navy);color:#fff;text-align:left;padding:12px 16px;font-size:13px;font-weight:600;}
+  tbody td{padding:10px 16px;border-top:1px solid var(--border);font-size:13.5px;}
+  tbody tr:nth-child(even){background:#fafbfe;}
+  tbody tr.total-row{background:#dde3fb;font-weight:700;}
+  tbody tr.grand-total{background:var(--navy);color:#fff;font-weight:700;}
+  .pos{color:var(--green);font-weight:600;}
+  .neg{color:var(--red);font-weight:600;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+  .kpi .label{font-size:11px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+  .kpi .value{font-size:20px;font-weight:700;}
+  .kpi .foot{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .tabs{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .tabs button{border:1px solid var(--border);background:#fff;padding:8px 16px;border-radius:20px;
+    font-size:13px;cursor:pointer;color:var(--text);}
+  .tabs button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .search{padding:8px 12px;border:1px solid var(--border);border-radius:6px;width:260px;margin-bottom:14px;font-size:13px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;}
+  .bar-row .name{width:130px;flex-shrink:0;color:var(--muted);}
+  .bar-track{flex:1;background:#eef0f9;border-radius:4px;height:20px;position:relative;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;color:#fff;font-size:11.5px;white-space:nowrap;}
+  .bar-fill.growth{background:var(--green);}
+  .bar-fill.decline{background:var(--red);}
+  .legend{display:flex;gap:18px;margin-bottom:14px;font-size:12.5px;color:var(--muted);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:2px;display:inline-block;}
+  .table-wrap{max-height:420px;overflow:auto;border-radius:8px;}
+  .table-wrap thead th{position:sticky;top:0;z-index:1;}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Store Performance Dashboard</h1>
+    <p id="subtitle">FY 2026-27 • Sample data • Target vs Achievement • 2025 vs 2026 Growth • Store KPIs</p>
+  </div>
+  <button onclick="loadLiveData()">⚙ Update Data</button>
+</header>
+
+<main>
+
+  <div class="filters">
+    <div>
+      <label>Month</label>
+      <select id="monthSelect"></select>
+    </div>
+    <div>
+      <label>Category</label>
+      <select id="categorySelect">
+        <option value="All">All</option>
+        <option value="COCO-TN">COCO-TN</option>
+        <option value="FOFO-TN">FOFO-TN</option>
+        <option value="Other States">Other States</option>
+      </select>
+    </div>
+  </div>
+
+  <section>
+    <h2>Category Comparison — Year to Date</h2>
+    <p class="sub">Cumulative Apr → selected month, regardless of the category filter above</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Metric</th><th>COCO-TN</th><th>FOFO-TN</th><th>Other States</th>
+        </tr></thead>
+        <tbody id="categoryCompBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="thisMonthTitle">This Month</h2>
+    <div class="kpi-grid" id="thisMonthKpis"></div>
+  </section>
+
+  <section>
+    <h2>Year to Date</h2>
+    <div class="kpi-grid" id="ytdKpis"></div>
+  </section>
+
+  <section>
+    <h2 id="monthPerfTitle">Month Performance</h2>
+    <p class="sub">Store-level sales vs target for the selected month.</p>
+    <input class="search" id="monthSearch" placeholder="Search store...">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Store</th><th>2025 Sales</th><th>2026 Sales</th><th>Target</th><th>Growth %</th>
+        </tr></thead>
+        <tbody id="monthPerfBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>YTD Performance</h2>
+    <p class="sub" id="ytdPerfSub"></p>
+    <input class="search" id="ytdSearch" placeholder="Search store...">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Store</th><th>Sales (2025)</th><th>Sales (2026)</th><th>Growth %</th>
+        </tr></thead>
+        <tbody id="ytdPerfBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Growth Leaderboard (YTD)</h2>
+    <p class="sub">Stores ranked by YTD growth %.</p>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--green)"></i>Growth</span>
+      <span><i class="dot" style="background:var(--red)"></i>Decline</span>
+    </div>
+    <div id="growthChart"></div>
+  </section>
+
+</main>
+
+<footer>Sample dashboard rebuilt from a reference screenshot — replace STORE_DATA below with your real dataset.</footer>
+
+<script>
+/* ---------------------------------------------------------
+   LIVE DATA SOURCES (published Google Sheet CSVs)
+   NOTE: these are wired up but the column mapping below
+   (parseSaleRow, parseTargetRow, etc.) is a best-guess
+   placeholder until the real header rows are confirmed.
+   Search "TODO: CONFIRM COLUMNS" to find what to adjust.
+--------------------------------------------------------- */
+const SALE_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=1054702314&single=true&output=csv";
+const SALE_LY_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=234205256&single=true&output=csv";
+const STORE_TARGET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=311460288&single=true&output=csv";
+const STAFF_TARGET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=187181872&single=true&output=csv";
+const STORE_TARGET_LY_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=108189863&single=true&output=csv";
+const CATEGORY_TARGET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=553992983&single=true&output=csv";
+const STORE_TYPE_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=1866992180&single=true&output=csv";
+
+/* Minimal CSV parser (handles quoted commas) */
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i=0; i<text.length; i++){
+    const c = text[i], next = text[i+1];
+    if (inQuotes){
+      if (c === '"' && next === '"'){ field += '"'; i++; }
+      else if (c === '"'){ inQuotes = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n' || c === '\r'){
+        if (c === '\r' && next === '\n') i++;
+        row.push(field); field = "";
+        if (row.length > 1 || row[0] !== "") rows.push(row);
+        row = [];
+      } else field += c;
+    }
+  }
+  if (field !== "" || row.length){ row.push(field); rows.push(row); }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).filter(r => r.some(v => v !== "")).map(r => {
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = (r[i]||"").trim());
+    return obj;
+  });
+}
+
+async function fetchCSV(url){
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to fetch " + url);
+  return parseCSV(await res.text());
+}
+
+/* ---------------------------------------------------------
+   SAMPLE DATA (fallback) — used until the live sheets are
+   fetched and confirmed. Structure:
+   { name, category, target: {month:amount}, sales2025:{month:amount}, sales2026:{month:amount} }
+--------------------------------------------------------- */
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const FY_MONTHS = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"]; // FY order
+const CURRENT_MONTH = "Sep";
+
+function rnd(min,max){ return Math.round(min + Math.random()*(max-min)); }
+
+const STORE_NAMES = {
+  "COCO-TN": ["Express Avenue","Velachery","Salem","Krishnagiri","Cross-Cut Road"],
+  "FOFO-TN": ["Shanthi Colony","Ashok Nagar","Selaiyur","Pondy Bazaar","Adyar","Porur","Vellore",
+    "Siruseri","Kovilpatti","Thoothukudi","Trichy","Pondicherry","Rs Puram","Sivagangai",
+    "Ramanathapuram","Tirunelveli","Cuddalore","Perambalur","Mysore","Warangal",
+    "Vanastalipuram","Karimnagar","Sivakasi","Anna Nagar","Neelambur","Purasaiwakkam"],
+  "Other States": ["Nellore","Vijayawada","Hyderabad Central","Vizag","Bengaluru North","Coimbatore East","Kochi Marine"]
+};
+
+const STORE_DATA = [];
+Object.entries(STORE_NAMES).forEach(([cat, names]) => {
+  names.forEach(name => {
+    const target = {}, s25 = {}, s26 = {};
+    MONTHS.forEach(m => {
+      const base = rnd(400000, 900000);
+      target[m] = base;
+      s25[m] = Math.round(base * (0.75 + Math.random()*0.3));
+      // ~65% of stores have 2026 data for current & past months, rest 0 (not yet uploaded)
+      s26[m] = Math.round(s25[m] * (0.85 + Math.random()*0.5));
+    });
+    // Simulate "not yet uploaded" for current month on some stores
+    if (Math.random() < 0.55) s26[CURRENT_MONTH] = 0;
+    STORE_DATA.push({ name, category: cat, target, sales2025: s25, sales2026: s26 });
+  });
+});
+
+/* ---------------------------------------------------------
+   LIVE DATA LOADER
+   TODO: CONFIRM COLUMNS — once you send me the real header
+   row for each sheet, this function gets rewritten to build
+   STORE_DATA from the actual CSVs instead of random numbers.
+   For now it just fetches + logs each sheet's headers to the
+   browser console (F12) so we can see the real column names.
+--------------------------------------------------------- */
+async function loadLiveData(){
+  const sources = {
+    SALE_URL, SALE_LY_URL, STORE_TARGET_URL, STORE_TARGET_LY_URL,
+    STAFF_TARGET_URL, CATEGORY_TARGET_URL, STORE_TYPE_URL
+  };
+  for (const [key, url] of Object.entries(sources)){
+    try {
+      const rows = await fetchCSV(url);
+      console.log(`[${key}] columns:`, rows.length ? Object.keys(rows[0]) : "(empty)");
+      console.log(`[${key}] sample row:`, rows[0]);
+    } catch (err){
+      console.error(`[${key}] fetch failed:`, err.message);
+    }
+  }
+  alert("Fetched your 7 sheets — open the browser console (F12) to see each sheet's column names. Once you share those with me, I'll finish wiring real data into the dashboard.");
+}
+
+/* ---------------------------------------------------------
+   Helpers
+--------------------------------------------------------- */
+const inr = n => "₹" + Math.round(n).toLocaleString("en-IN");
+const pct = n => (isFinite(n) ? (n>=0?"+":"") + n.toFixed(1) + "%" : "N/A");
+function growthClass(n){ return n >= 0 ? "pos" : "neg"; }
+
+function ytdMonths(uptoMonth){
+  const idx = FY_MONTHS.indexOf(uptoMonth);
+  return FY_MONTHS.slice(0, idx+1);
+}
+
+function sumField(stores, field, months){
+  return stores.reduce((tot, st) => tot + months.reduce((s,m) => s + (st[field][m]||0), 0), 0);
+}
+
+/* ---------------------------------------------------------
+   Populate month selector
+--------------------------------------------------------- */
+const monthSelect = document.getElementById("monthSelect");
+FY_MONTHS.forEach(m => {
+  const opt = document.createElement("option");
+  opt.value = m; opt.textContent = m;
+  if (m === CURRENT_MONTH) opt.selected = true;
+  monthSelect.appendChild(opt);
+});
+
+const categorySelect = document.getElementById("categorySelect");
+monthSelect.addEventListener("change", render);
+categorySelect.addEventListener("change", render);
+document.getElementById("monthSearch").addEventListener("input", renderMonthPerf);
+document.getElementById("ytdSearch").addEventListener("input", renderYtdPerf);
+
+/* ---------------------------------------------------------
+   Renderers
+--------------------------------------------------------- */
+function currentStores(){
+  const cat = categorySelect.value;
+  return cat === "All" ? STORE_DATA : STORE_DATA.filter(s => s.category === cat);
+}
+
+function renderCategoryComparison(){
+  const month = monthSelect.value;
+  const months = ytdMonths(month);
+  const cats = ["COCO-TN","FOFO-TN","Other States"];
+  const rows = [
+    ["Stores", c => STORE_DATA.filter(s=>s.category===c).length],
+    ["Target", c => inr(sumField(STORE_DATA.filter(s=>s.category===c), "target", months))],
+    ["Achieved", c => inr(sumField(STORE_DATA.filter(s=>s.category===c), "sales2026", months))],
+    ["Achievement %", c => {
+      const stores = STORE_DATA.filter(s=>s.category===c);
+      const t = sumField(stores,"target",months), a = sumField(stores,"sales2026",months);
+      return pct((a/t*100) - 100 + 100).replace("+","").slice(0,-1) + "%"; // just show ratio
+    }],
+  ];
+  // simpler: compute achievement% properly
+  const body = document.getElementById("categoryCompBody");
+  body.innerHTML = "";
+  const metricRows = [
+    { label:"Stores", calc:c => STORE_DATA.filter(s=>s.category===c).length },
+    { label:"Target", calc:c => inr(sumField(STORE_DATA.filter(s=>s.category===c),"target",months)) },
+    { label:"Achieved", calc:c => inr(sumField(STORE_DATA.filter(s=>s.category===c),"sales2026",months)) },
+    { label:"Achievement %", calc:c => {
+        const st = STORE_DATA.filter(s=>s.category===c);
+        const t = sumField(st,"target",months), a = sumField(st,"sales2026",months);
+        return (t? (a/t*100).toFixed(1):"0.0") + "%";
+      }},
+    { label:"L2L Growth %", calc:c => {
+        const st = STORE_DATA.filter(s=>s.category===c);
+        const a25 = sumField(st,"sales2025",months), a26 = sumField(st,"sales2026",months);
+        const g = a25? ((a26-a25)/a25*100) : 0;
+        return `<span class="${growthClass(g)}">${pct(g)}</span>`;
+      }},
+  ];
+  metricRows.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><strong>${row.label}</strong></td>` + cats.map(c=>`<td>${row.calc(c)}</td>`).join("");
+    body.appendChild(tr);
+  });
+}
+
+function kpiCard(label, value, foot, footClass){
+  return `<div class="kpi">
+    <div class="label">${label}</div>
+    <div class="value">${value}</div>
+    <div class="foot ${footClass||''}">${foot||''}</div>
+  </div>`;
+}
+
+function renderKpis(){
+  const month = monthSelect.value;
+  const stores = currentStores();
+
+  document.getElementById("thisMonthTitle").textContent = `This Month — ${month} 2026`;
+  const target = sumField(stores,"target",[month]);
+  const achieved = sumField(stores,"sales2026",[month]);
+  const prev = sumField(stores,"sales2025",[month]);
+  const growth = prev ? ((achieved-prev)/prev*100) : 0;
+  const achPct = target ? (achieved/target*100) : 0;
+
+  document.getElementById("thisMonthKpis").innerHTML = [
+    kpiCard("Target", inr(target), `${month} 2026 target`),
+    kpiCard("Achieved", inr(achieved), "Net sales"),
+    kpiCard("Achievement %", achPct.toFixed(1)+"%", "vs target"),
+    kpiCard("Previous Sales", inr(prev), "2025"),
+    kpiCard("Growth %", pct(growth), "vs 2025", growthClass(growth)),
+  ].join("");
+
+  const months = ytdMonths(month);
+  const yTarget = sumField(stores,"target",months);
+  const yAchieved = sumField(stores,"sales2026",months);
+  const yPrev = sumField(stores,"sales2025",months);
+  const yGrowth = yPrev ? ((yAchieved-yPrev)/yPrev*100) : 0;
+  const yAchPct = yTarget ? (yAchieved/yTarget*100) : 0;
+
+  document.getElementById("ytdKpis").innerHTML = [
+    kpiCard("Target", inr(yTarget), `Apr–${month} 2026 target`),
+    kpiCard("Achieved", inr(yAchieved), "Net sales"),
+    kpiCard("Achievement %", yAchPct.toFixed(1)+"%", "vs target"),
+    kpiCard("Previous Sales", inr(yPrev), "2025"),
+    kpiCard("Growth %", pct(yGrowth), "vs 2025", growthClass(yGrowth)),
+  ].join("");
+}
+
+function renderMonthPerf(){
+  const month = monthSelect.value;
+  const q = document.getElementById("monthSearch").value.toLowerCase();
+  document.getElementById("monthPerfTitle").textContent = `Month Performance — ${month} 2026`;
+  const body = document.getElementById("monthPerfBody");
+  body.innerHTML = "";
+  currentStores()
+    .filter(s => s.name.toLowerCase().includes(q))
+    .forEach(s => {
+      const s25 = s.sales2025[month]||0, s26 = s.sales2026[month]||0, t = s.target[month]||0;
+      const g = s25 ? ((s26-s25)/s25*100) : null;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.name}</td><td>${inr(s25)}</td><td>${inr(s26)}</td><td>${inr(t)}</td>
+        <td>${g===null?'N/A':`<span class="${growthClass(g)}">${pct(g)}</span>`}</td>`;
+      body.appendChild(tr);
+    });
+}
+
+function renderYtdPerf(){
+  const month = monthSelect.value;
+  const months = ytdMonths(month);
+  const q = document.getElementById("ytdSearch").value.toLowerCase();
+  document.getElementById("ytdPerfSub").textContent =
+    `Cumulative Apr–${month} 2026, filtered by the category selected above.`;
+  const body = document.getElementById("ytdPerfBody");
+  body.innerHTML = "";
+
+  const cats = categorySelect.value === "All" ? ["COCO-TN","FOFO-TN","Other States"] : [categorySelect.value];
+  let grand25 = 0, grand26 = 0;
+
+  cats.forEach(cat => {
+    const stores = STORE_DATA.filter(s => s.category===cat && s.name.toLowerCase().includes(q));
+    let cat25 = 0, cat26 = 0;
+    stores.forEach(s => {
+      const s25 = months.reduce((sum,m)=>sum+(s.sales2025[m]||0),0);
+      const s26 = months.reduce((sum,m)=>sum+(s.sales2026[m]||0),0);
+      cat25 += s25; cat26 += s26;
+      const g = s25 ? ((s26-s25)/s25*100) : null;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${s.name}</td><td>${inr(s25)}</td><td>${inr(s26)}</td>
+        <td>${g===null?'N/A':`<span class="${growthClass(g)}">${pct(g)}</span>`}</td>`;
+      body.appendChild(tr);
+    });
+    const catG = cat25 ? ((cat26-cat25)/cat25*100) : 0;
+    const totalTr = document.createElement("tr");
+    totalTr.className = "total-row";
+    totalTr.innerHTML = `<td>${cat} Total</td><td>${inr(cat25)}</td><td>${inr(cat26)}</td>
+      <td><span class="${growthClass(catG)}">${pct(catG)}</span></td>`;
+    body.appendChild(totalTr);
+    grand25 += cat25; grand26 += cat26;
+  });
+
+  const grandG = grand25 ? ((grand26-grand25)/grand25*100) : 0;
+  const grandTr = document.createElement("tr");
+  grandTr.className = "grand-total";
+  grandTr.innerHTML = `<td>Retail Total</td><td>${inr(grand25)}</td><td>${inr(grand26)}</td>
+    <td>${pct(grandG)}</td>`;
+  body.appendChild(grandTr);
+}
+
+function renderGrowthChart(){
+  const month = monthSelect.value;
+  const months = ytdMonths(month);
+  const stores = currentStores().map(s => {
+    const s25 = months.reduce((sum,m)=>sum+(s.sales2025[m]||0),0);
+    const s26 = months.reduce((sum,m)=>sum+(s.sales2026[m]||0),0);
+    const g = s25 ? ((s26-s25)/s25*100) : 0;
+    return { name: s.name, g };
+  }).sort((a,b) => b.g - a.g).slice(0, 15);
+
+  const maxAbs = Math.max(...stores.map(s=>Math.abs(s.g)), 1);
+  const container = document.getElementById("growthChart");
+  container.innerHTML = stores.map(s => {
+    const widthPct = Math.min(100, Math.abs(s.g)/maxAbs*100);
+    const cls = s.g >= 0 ? "growth" : "decline";
+    return `<div class="bar-row">
+      <div class="name">${s.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${cls}" style="width:${widthPct}%">${pct(s.g)}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function render(){
+  document.getElementById("subtitle").textContent =
+    `FY 2026-27 • ${monthSelect.value} 2026 selected • Category: ${categorySelect.value} • Sample data`;
+  renderCategoryComparison();
+  renderKpis();
+  renderMonthPerf();
+  renderYtdPerf();
+  renderGrowthChart();
+}
+
+render();
+</script>
+</body>
+</html>
