@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Store Performance Dashboard — FY 2026-27</title>
+<style>
+  :root{
+    --navy:#1E2761; --navy-dark:#141A47; --ice:#CADCFC; --white:#FFFFFF;
+    --bg:#F4F6FB; --grey:#6B7280; --grey-dark:#3B4252;
+    --green:#1E9E63; --green-bg:#E6F7EF; --red:#C23B2A; --red-bg:#FCEAE7;
+    --border:#E4E8F2; --amber-bg:#FFF7EC;
+    --purple:#5B3EA8; --purple-bg:#EFEAFB;
+    --coral-bg:#FAECE7; --coral:#712B13;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:Calibri,Arial,sans-serif; background:var(--bg); color:var(--navy); }
+  header{ background:var(--navy); color:var(--white); padding:28px 40px 24px; position:relative; overflow:hidden; }
+  header::after{ content:""; position:absolute; right:-60px; top:-90px; width:220px; height:220px; border-radius:50%; background:var(--navy-dark); }
+  header h1{ margin:0; font-size:26px; letter-spacing:0.5px; font-weight:700; position:relative; z-index:1; }
+  header p{ margin:6px 0 0; color:var(--ice); font-size:13.5px; position:relative; z-index:1; }
+  .wrap{ max-width:1320px; margin:0 auto; padding:0 40px 60px; }
+
+  .filterbar{
+    background:var(--white); border-radius:10px; padding:14px 18px; margin-top:-28px; position:relative; z-index:2;
+    box-shadow:0 6px 18px rgba(30,39,97,0.12); display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .filter-group{ display:flex; align-items:center; gap:6px; }
+  .filter-label{ font-size:11px; font-weight:700; color:var(--grey); text-transform:uppercase; letter-spacing:0.4px; margin-right:2px; }
+  .pill{ border:1px solid var(--border); background:var(--white); color:var(--navy); padding:7px 14px; border-radius:16px; font-size:12px; font-weight:600; cursor:pointer; }
+  .pill.active{ background:var(--navy); color:var(--white); border-color:var(--navy); }
+  .pill.small{ padding:5px 11px; font-size:11.5px; }
+  .dropdown{ border:1px solid var(--border); background:var(--white); color:var(--navy); padding:7px 30px 7px 12px; border-radius:16px; font-size:12.5px; font-weight:600; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231E2761'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; }
+  .divider{ width:1px; align-self:stretch; background:var(--border); }
+  .spacer{ flex:1; }
+
+  .section{ margin-top:30px; }
+  .section-title{ font-size:19px; font-weight:700; margin:0 0 4px; }
+  .section-sub{ font-size:12.5px; color:var(--grey); margin:0 0 16px; }
+
+  /* category comparison */
+  .cat-row{ overflow-x:auto; }
+  .cat-table{ width:100%; border-collapse:collapse; background:var(--white); border-radius:10px; overflow:hidden; box-shadow:0 4px 14px rgba(30,39,97,0.07); }
+  .cat-table thead th{ padding:14px 16px; font-size:13px; text-align:center; background:var(--navy); color:var(--white); }
+  .cat-table thead th.cat-table-metric{ text-align:left; background:var(--navy-dark); width:180px; }
+  .cat-table thead th.coco{ border-top:3px solid #8B6FD9; }
+  .cat-table thead th.fofo{ border-top:3px solid #E08A6B; }
+  .cat-table thead th.other{ border-top:3px solid var(--green); }
+  .cat-table tbody td{ padding:10px 16px; font-size:12.5px; text-align:center; border-bottom:1px solid var(--border); }
+  .cat-table tbody td.cat-table-metric{ text-align:left; font-weight:600; color:var(--navy); background:var(--bg); }
+  .cat-table tbody tr:nth-child(even) td.cat-table-val{ background:#FAFBFE; }
+  .cat-table tbody td.cat-table-val{ color:var(--navy); font-variant-numeric:tabular-nums; }
+  .cat-table tbody td.cat-table-val.bold{ font-weight:700; }
+  .cat-table tbody tr:last-child td{ border-bottom:none; }
+
+  .kpi-row{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; }
+  .kpi-card{ background:var(--white); border-radius:10px; padding:16px 16px 14px; box-shadow:0 4px 14px rgba(30,39,97,0.07); }
+  .kpi-card .label{ font-size:10px; font-weight:700; letter-spacing:0.6px; color:var(--grey); text-transform:uppercase; }
+  .kpi-card .value{ font-size:21px; font-weight:700; margin-top:6px; color:var(--navy); }
+  .kpi-card .sub{ font-size:11px; color:var(--grey); margin-top:4px; }
+  .kpi-card .sub.up{ color:var(--green); font-weight:600; }
+  .kpi-card .sub.down{ color:var(--red); font-weight:600; }
+
+  .note{ background:var(--amber-bg); border-radius:8px; padding:14px 18px; font-size:12.5px; margin-top:22px; line-height:1.55; }
+  .note b{ color:var(--navy); }
+
+  .tabs{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab-btn{ border:1px solid var(--border); background:var(--white); color:var(--navy); padding:9px 16px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; }
+  .tab-btn.active{ background:var(--navy); color:var(--white); border-color:var(--navy); }
+  .subtoggle{ display:flex; gap:6px; margin-bottom:14px; }
+  .sub-btn{ border:1px solid var(--border); background:var(--white); color:var(--grey-dark); padding:6px 12px; border-radius:14px; font-size:11.5px; cursor:pointer; }
+  .sub-btn.active{ background:var(--ice); border-color:var(--navy); color:var(--navy); font-weight:700; }
+
+  .card{ background:var(--white); border-radius:10px; padding:22px; box-shadow:0 4px 14px rgba(30,39,97,0.07); }
+  .legend-row{ display:flex; gap:18px; margin-bottom:14px; font-size:12px; color:var(--grey-dark); }
+  .chart-toggle-btn{ border:1px solid var(--border); background:var(--white); color:var(--navy); padding:5px 12px; border-radius:14px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .chart-toggle-btn:hover{ border-color:var(--navy); }
+  .legend-dot{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+
+  .hbar-scroll{ max-height:560px; overflow-y:auto; padding-right:6px; }
+  .hbar-row{ display:grid; grid-template-columns:130px 1fr; align-items:center; gap:10px; margin-bottom:5px; }
+  .hbar-label{ font-size:10.5px; color:var(--navy); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hbar-track{ position:relative; height:18px; }
+  .hbar-seg{ position:absolute; top:0; height:18px; border-radius:3px; }
+  .hbar-val{ font-size:9.5px; color:var(--navy); margin-left:4px; white-space:nowrap; position:absolute; left:100%; top:0; line-height:18px; }
+
+  .div-row{ display:grid; grid-template-columns:130px 1fr; align-items:center; gap:10px; margin-bottom:5px; }
+  .div-track{ position:relative; height:18px; background:#F1F3FA; border-radius:3px; }
+  .div-center{ position:absolute; top:0; bottom:0; width:1px; background:#C7CDDC; }
+  .div-bar{ position:absolute; top:0; height:18px; border-radius:3px; }
+  .div-bar.pos{ background:var(--green); }
+  .div-bar.neg{ background:var(--red); }
+  .div-val{ position:absolute; top:0; font-size:9.5px; color:var(--navy); line-height:18px; }
+
+  /* vertical grouped bar chart (weekly / category performance) */
+  .vbar-wrap{ display:flex; align-items:flex-end; gap:36px; height:290px; padding:16px 12px 0; overflow-x:auto; }
+  .vbar-group{ display:flex; flex-direction:column; align-items:center; min-width:100px; height:100%; justify-content:flex-end; }
+  .vbar-pair{ display:flex; align-items:flex-end; gap:10px; height:200px; }
+  .vbar{ width:26px; border-radius:3px 3px 0 0; position:relative; }
+  .vbar.a{ background:var(--ice); }
+  .vbar.b{ background:var(--navy); }
+  .vbar-lbl{ font-size:10.5px; font-weight:700; color:var(--navy); margin-top:10px; text-align:center; max-width:110px; word-break:break-word; line-height:1.3; }
+  .vbar-sublbl{ font-size:8.5px; color:var(--grey); margin-top:2px; text-align:center; white-space:nowrap; }
+  .vbar-num{ position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--grey-dark); white-space:nowrap; }
+  .vbar-growth{ font-size:9px; font-weight:700; margin-top:4px; }
+  .muted{ color:var(--grey); }
+
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  thead th{ position:sticky; top:0; background:var(--navy); color:var(--white); text-align:left; padding:11px 12px; font-size:12.5px; letter-spacing:0.2px; cursor:pointer; user-select:none; white-space:nowrap; border:1px solid var(--navy-dark); }
+  tbody td{ padding:9px 12px; border:1px solid var(--border); white-space:nowrap; }
+  tbody tr:nth-child(even){ background:#FAFBFE; }
+  tbody tr:hover{ background:var(--ice); }
+  tbody tr.row-subtotal td{ background:var(--ice) !important; font-weight:700; border-top:1.5px solid var(--navy); }
+  tbody tr.row-subtotal:hover td{ background:var(--ice) !important; }
+  tbody tr.row-grandtotal td{ background:var(--navy) !important; color:var(--white); font-weight:700; border-top:2px solid var(--navy-dark); }
+  tbody tr.row-grandtotal:hover td{ background:var(--navy) !important; }
+  tbody tr.row-grandtotal td.pos{ color:#7FE0AE; }
+  tbody tr.row-grandtotal td.neg{ color:#FFAFA0; }
+  tbody tr.row-grandtotal td.muted{ color:#B9C0DD; }
+  td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .pos{ color:var(--green); font-weight:700; }
+  .neg{ color:var(--red); font-weight:700; }
+  .table-wrap{ max-height:480px; overflow:auto; border:1px solid var(--border); border-radius:8px; }
+  .table-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap; }
+  .search{ border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12.5px; width:220px; }
+  .badge{ background:var(--ice); color:var(--navy); border-radius:12px; padding:3px 10px; font-size:11px; font-weight:700; }
+
+  footer{ text-align:center; color:var(--grey); font-size:11px; padding:24px 0 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Store Performance Dashboard</h1>
+  <p id="headerSub">FY 2026-27 &nbsp;•&nbsp; Target vs Achievement &nbsp;•&nbsp; LY vs CY Growth &nbsp;•&nbsp; Store KPIs</p>
+  <div style="position:absolute; top:26px; right:40px; z-index:3; display:flex; align-items:center; gap:10px;">
+    <span id="liveStatus" style="font-size:11.5px; font-weight:600; color:#CADCFC; background:rgba(255,255,255,0.12); padding:6px 12px; border-radius:14px;">Connecting…</span>
+    <button id="refreshLive" title="Re-fetch the live Google Sheets" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.35); color:#fff; padding:8px 14px; border-radius:18px; font-size:12.5px; font-weight:600; cursor:pointer;">⟳ Refresh</button>
+    <button id="openDataMgr" title="Manually upload CSV/snapshot files instead" style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.35); color:#fff; padding:8px 16px; border-radius:18px; font-size:12.5px; font-weight:600; cursor:pointer;">⚙ Manual Upload</button>
+  </div>
+</header>
+
+<div id="dataMgrOverlay" style="display:none; position:fixed; inset:0; background:rgba(20,26,71,0.55); z-index:50; align-items:flex-start; justify-content:center; overflow-y:auto; padding:40px 20px;">
+  <div style="background:#fff; border-radius:14px; max-width:720px; width:100%; padding:28px 32px 32px; margin-bottom:40px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h2 style="margin:0 0 4px; font-size:20px; color:#1E2761;">Update Dashboard Data</h2>
+        <p style="margin:0; font-size:12.5px; color:#6B7280;">This dashboard now loads live from your published Google Sheets automatically. Use this manual upload only as a one-off override or if a live fetch fails — all processing happens in your browser, nothing is uploaded anywhere.</p>
+      </div>
+      <button id="closeDataMgr" style="background:none; border:none; font-size:22px; color:#6B7280; cursor:pointer; line-height:1;">×</button>
+    </div>
+
+    <div style="background:#F4F6FB; border-radius:10px; padding:14px 16px; margin:18px 0; font-size:11.5px; color:#3B4252; line-height:1.6;">
+      <b>File formats needed (CSV, not Excel):</b><br/>
+      1. <b>Current-year sales</b> — columns must include Location, Bill Date (DD-MM-YYYY), Bill Code, Product, Bill Amount, Net Qty, Salesman<br/>
+      2. <b>Last-year sales</b> — same columns, same months as the current-year file (e.g. if uploading August, include August of last year)<br/>
+      3. <b>Store targets</b> — columns: STORES, Store Category, then one column per month (header = month name, e.g. AUGUST). You can include just the new month's column, or the whole file — existing months are merged, not replaced.<br/>
+      4. <b>Staff targets (optional)</b> — columns: Store, Staff Name (or "Staff"), Month, Target (or "Gross Target"). Leave a row's Target <b>blank</b> if you haven't decided yet — that staff just falls into the normal equal split. Enter <b>0</b> for a store manager — they'll show sales but no target, and won't be counted in anyone else's equal split. Any staff not listed at all also get an equal split of what's left over.<br/>
+      <i>Tip: in Excel, use File → Save As → CSV for each sheet/file.</i><br/><br/>
+      <b>Mid-month uploads:</b> if your current-year file only covers part of a month (e.g. 1–14 August), that's fine — the dashboard shows your actual sales as-is, and automatically compares against the <i>same date range</i> last year (1–14 August last year) instead of the full month, so growth% stays fair. It'll say so in the Month Performance section when this applies.
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <label style="font-size:12px; font-weight:600; color:#1E2761;">Current-year sales CSV
+        <input type="file" id="fileSalesCY" accept=".csv" style="display:block; margin-top:5px; font-size:12px;" />
+      </label>
+      <label style="font-size:12px; font-weight:600; color:#1E2761;">Last-year sales CSV
+        <input type="file" id="fileSalesLY" accept=".csv" style="display:block; margin-top:5px; font-size:12px;" />
+      </label>
+      <label style="font-size:12px; font-weight:600; color:#1E2761;">Store targets &amp; category CSV
+        <input type="file" id="fileTargets" accept=".csv" style="display:block; margin-top:5px; font-size:12px;" />
+      </label>
+      <label style="font-size:12px; font-weight:600; color:#1E2761;">Staff targets CSV (optional)
+        <input type="file" id="fileStaffTargets" accept=".csv" style="display:block; margin-top:5px; font-size:12px;" />
+      </label>
+    </div>
+
+    <div id="dataMgrStatus" style="margin-top:14px; font-size:12px; min-height:18px;"></div>
+
+
+    <div style="display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;">
+      <button id="processFiles" style="background:#1E2761; color:#fff; border:none; padding:10px 20px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer;">Process &amp; Merge Into Dashboard</button>
+      <button id="downloadSnapshot" style="background:#fff; color:#1E2761; border:1px solid #1E2761; padding:10px 20px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer;">Download Data Snapshot (.json)</button>
+    </div>
+
+    <div style="border-top:1px solid #E4E8F2; margin-top:22px; padding-top:16px;">
+      <label style="font-size:12px; font-weight:600; color:#1E2761;">Load a previously saved snapshot instead (.json)
+        <input type="file" id="fileSnapshot" accept=".json" style="display:block; margin-top:5px; font-size:12px;" />
+      </label>
+      <button id="loadSnapshot" style="margin-top:10px; background:#fff; color:#1E2761; border:1px solid #1E2761; padding:8px 16px; border-radius:18px; font-size:12px; font-weight:600; cursor:pointer;">Load Snapshot</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="filterbar">
+    <div class="filter-group">
+      <span class="filter-label">Month</span>
+      <select id="monthSelect" class="dropdown"></select>
+    </div>
+    <div class="divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">Category</span>
+      <select id="catSelect" class="dropdown"></select>
+    </div>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Category Comparison — Year to Date</div>
+    <div class="section-sub" id="catCompSub"></div>
+    <div class="cat-row" id="catRow"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" id="monthKpiTitle">This Month</div>
+    <div class="kpi-row" id="monthKpiRow"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" id="ytdKpiTitle">Year to Date</div>
+    <div class="kpi-row" id="ytdKpiRow"></div>
+    <div class="note" id="coverageNote"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" id="monthPerfTitle">Month Performance</div>
+    <div class="section-sub" id="monthPerfSub"></div>
+    <div class="filter-group" id="monthViewTabs" style="margin:10px 0 4px;">
+      <button class="pill active" data-view="target">Target vs Achievement</button>
+      <button class="pill" data-view="growth">LY vs CY Growth</button>
+      <button class="pill" data-view="combined">Combined View</button>
+    </div>
+    <div id="monthGrowthSubToggle" class="subtoggle" style="display:none;">
+      <button class="sub-btn active" data-mode="l2l">Like-for-like stores only (this month)</button>
+      <button class="sub-btn" data-mode="all">All stores (incl. new/closed)</button>
+    </div>
+    <div class="table-toolbar">
+      <input class="search" id="monthSearch" type="text" placeholder="Search store..." />
+      <span class="badge" id="monthRowCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="monthTable"><thead id="monthTableHead"></thead><tbody id="monthTableBody"></tbody></table>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="legend-row" id="monthLegend"></div>
+        <button class="chart-toggle-btn" id="monthChartToggle" data-target="monthChart">Hide chart</button>
+      </div>
+      <div class="hbar-scroll" id="monthChart"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title" id="ytdPerfTitle">YTD Performance</div>
+    <div class="section-sub" id="ytdPerfSub"></div>
+    <div class="filter-group" id="ytdViewTabs" style="margin:10px 0 4px;">
+      <button class="pill active" data-view="target">Target vs Achievement</button>
+      <button class="pill" data-view="growth">LY vs CY Growth</button>
+      <button class="pill" data-view="combined">Combined View</button>
+    </div>
+    <div id="ytdGrowthSubToggle" class="subtoggle" style="display:none;">
+      <button class="sub-btn active" data-mode="l2l">Like-for-like stores only (overlapping months)</button>
+      <button class="sub-btn" data-mode="all">All stores (incl. new/closed)</button>
+    </div>
+    <div class="table-toolbar">
+      <input class="search" id="ytdSearch" type="text" placeholder="Search store..." />
+      <span class="badge" id="ytdRowCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="ytdTable"><thead id="ytdTableHead"></thead><tbody id="ytdTableBody"></tbody></table>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="legend-row" id="ytdLegend"></div>
+        <button class="chart-toggle-btn" id="ytdChartToggle" data-target="ytdChart">Hide chart</button>
+      </div>
+      <div class="hbar-scroll" id="ytdChart"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Staff Performance</div>
+    <div class="section-sub" id="staffPerfSub">Pick a store to see its staff-wise breakdown for the selected month</div>
+    <div class="filter-group" style="margin-bottom:14px;">
+      <span class="filter-label">Store</span>
+      <select id="staffStoreSelect" class="dropdown"></select>
+    </div>
+    <div class="card">
+      <div id="staffNote" style="font-size:11.5px; color:var(--grey); margin-bottom:12px;"></div>
+      <div class="table-wrap">
+        <table id="staffTable">
+          <thead id="staffTableHead"></thead>
+          <tbody id="staffTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="section-title" style="font-size:15px;">Week-on-Week Performance</div>
+          <div class="section-sub" id="weeklySub" style="margin-bottom:14px;">Monday\u2013Sunday weeks within the selected month; first/last week may be shorter</div>
+        </div>
+        <button class="chart-toggle-btn" id="weeklyChartToggle" data-target="weeklyChart">Hide chart</button>
+      </div>
+      <div class="legend-row" id="weeklyLegend"></div>
+      <div class="vbar-wrap" id="weeklyChart"></div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="section-title" style="font-size:15px;">Category Performance</div>
+          <div class="section-sub" id="prodCatSub" style="margin-bottom:14px;">Product category units sold vs last year (Lounge Wear merged into Nightwear)</div>
+        </div>
+        <button class="chart-toggle-btn" id="prodCatChartToggle" data-target="prodCatChart">Hide chart</button>
+      </div>
+      <div class="legend-row" id="prodCatLegend"></div>
+      <div class="vbar-wrap" id="prodCatChart"></div>
+    </div>
+  </div>
+
+  <footer>Data: Apr–Jul store sales reports (post CARRYBAG exclusion) and monthly Gross Target file &nbsp;•&nbsp; ₹ values shown exact &nbsp;•&nbsp; Store category from 2026 target file</footer>
+</div>
+
+<script>
+const YEAR_DATA = { months: ["Apr"], stores: [], categories: [] };
+</script>
+<script>
+try {
+
+let MONTHS = YEAR_DATA.months;                  // ["Apr","May","Jun","Jul"]
+let STORES = YEAR_DATA.stores;                  // raw per-store per-month records
+let CATEGORIES = YEAR_DATA.categories.filter(c => c !== "Discontinued");
+
+const NAVY="#1E2761", ICE="#CADCFC", GREEN="#1E9E63", RED="#C23B2A", GREY="#6B7280", SLATE="#AAB3C5";
+
+function fmtLakh(v){ return (v==null) ? "-" : "₹" + Math.round(v).toLocaleString("en-IN"); }
+function fmtInr(v){ return (v==null) ? "-" : "₹" + Math.round(v).toLocaleString("en-IN"); }
+function fmtPct(v){ return (v==null) ? "N/A" : (v>=0?"+":"") + v.toFixed(1) + "%"; }
+function fmtNum(v){ return (v==null) ? "-" : v.toLocaleString("en-IN"); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// ---------------- STATE ----------------
+let selMonthIdx = MONTHS.length - 1;   // default: latest month
+let selCategory = "All";
+let monthView = "target";
+let ytdView = "target";
+let monthGrowthMode = "l2l";
+let ytdGrowthMode = "l2l";
+
+// ---------------- RAW ACCESSORS ----------------
+const MONTH_NAMES_CAL = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const CY_BASE_YEAR = 2026, LY_BASE_YEAR = 2025; // fiscal year anchor; Jan-Mar roll to base+1
+function calendarYear(monthKey, base){
+  const idx = MONTH_NAMES_CAL.indexOf(monthKey);
+  return idx <= 2 ? base + 1 : base; // Jan/Feb/Mar belong to the next calendar year of this FY
+}
+function daysInMonth(monthKey){
+  const idx = MONTH_NAMES_CAL.indexOf(monthKey);
+  const year = calendarYear(monthKey, CY_BASE_YEAR);
+  return new Date(year, idx + 1, 0).getDate();
+}
+// If the current-year upload for a month only covers part of it (e.g. days 1-14),
+// compare against the SAME days last year instead of the full LY month — otherwise
+// a partial month looks like a huge decline against a complete prior-year month.
+function matchedPeriodLY(store, monthKey){
+  const rec = store.m[monthKey];
+  if(!rec) return null;
+  const days26 = rec.days26 || {};
+  const dayNums = Object.keys(days26).map(Number).filter(n=>!isNaN(n));
+  if(dayNums.length === 0) return null; // no day-level detail (older bulk data) — use full totals as-is
+  const coverageDay = Math.max(...dayNums);
+  const totalDays = daysInMonth(monthKey);
+  if(coverageDay >= totalDays) return { isPartial:false, coverageDay, totalDays };
+  const days25 = rec.days25 || {};
+  let sales25=0, bills25=0, qty25=0;
+  for(let d=1; d<=coverageDay; d++){
+    const dr = days25[String(d)];
+    if(dr){ sales25 += dr.sales; bills25 += dr.bills; qty25 += dr.qty; }
+  }
+  return { isPartial:true, coverageDay, totalDays, sales25, bills25, qty25 };
+}
+function monthRaw(store, mIdx){
+  const m = MONTHS[mIdx];
+  const base = store.m[m];
+  const match = matchedPeriodLY(store, m);
+  if(match && match.isPartial){
+    return { ...base, sales25: match.sales25, bills25: match.bills25, qty25: match.qty25, __partial: match };
+  }
+  return { ...base, __partial: match };
+}
+// sum raw fields across months[0..toIdx] inclusive
+function ytdRaw(store, toIdx){
+  const out = {target25:null, sales25:0, bills25:0, qty25:0, target26:null, sales26:0, bills26:0, qty26:0};
+  let any25=false, any26=false;
+  for(let i=0;i<=toIdx;i++){
+    const r = monthRaw(store, i);
+    if(r.target25!=null){ out.target25 = (out.target25||0) + r.target25; any25=true; }
+    if(r.target26!=null){ out.target26 = (out.target26||0) + r.target26; any26=true; }
+    out.sales25 += r.sales25; out.bills25 += r.bills25; out.qty25 += r.qty25;
+    out.sales26 += r.sales26; out.bills26 += r.bills26; out.qty26 += r.qty26;
+  }
+  return out;
+}
+function isL2LMonth(store, mIdx){
+  const r = monthRaw(store, mIdx);
+  return r.sales25 > 0 && r.sales26 > 0;
+}
+// For YTD: a store's LY-vs-CY comparison should only use the months where it was
+// actually trading in BOTH years. A store that opened mid-year (e.g. Aug'25) has
+// zero sales in the months before it existed — those months must not be summed
+// into the comparison, or growth gets wildly distorted. So: sum only the
+// individual months (within Apr..toIdx) where sales25>0 AND sales26>0.
+// (monthRaw already applies matched-period LY for any partial month in range.)
+function ytdL2LStats(store, toIdx){
+  const out = { sales25:0, sales26:0, bills25:0, bills26:0, qty25:0, qty26:0, qualMonths:0 };
+  for(let i=0;i<=toIdx;i++){
+    const r = monthRaw(store, i);
+    if(r.sales25 > 0 && r.sales26 > 0){
+      out.sales25 += r.sales25; out.sales26 += r.sales26;
+      out.bills25 += r.bills25; out.bills26 += r.bills26;
+      out.qty25 += r.qty25; out.qty26 += r.qty26;
+      out.qualMonths += 1;
+    }
+  }
+  return out;
+}
+function isL2LYtd(store, toIdx){
+  return ytdL2LStats(store, toIdx).qualMonths > 0;
+}
+
+// ---------------- DERIVED METRICS ----------------
+function derive(raw){
+  const ach26 = (raw.target26 && raw.target26 > 0) ? (raw.sales26/raw.target26*100) : null;
+  const ach25 = (raw.target25 && raw.target25 > 0) ? (raw.sales25/raw.target25*100) : null;
+  const abv25 = raw.bills25>0 ? raw.sales25/raw.bills25 : null;
+  const abv26 = raw.bills26>0 ? raw.sales26/raw.bills26 : null;
+  const basket25 = raw.bills25>0 ? raw.qty25/raw.bills25 : null;
+  const basket26 = raw.bills26>0 ? raw.qty26/raw.bills26 : null;
+  const yoy = raw.sales25>0 ? (raw.sales26-raw.sales25)/raw.sales25*100 : null;
+  return {...raw, ach25, ach26, abv25, abv26, basket25, basket26, yoy};
+}
+
+function getFilteredStores(){
+  return selCategory==="All" ? STORES.filter(s=>s.category!=="Discontinued") : STORES.filter(s=>s.category===selCategory);
+}
+
+// A "row" for month view = derive(monthRaw), for ytd view = derive(ytdRaw(toIdx))
+function monthRows(){ return getFilteredStores().map(s => ({key:s.key, store:s.store, category:s.category, ...derive(monthRaw(s, selMonthIdx)), __isL2L: isL2LMonth(s, selMonthIdx)})); }
+function ytdRows(){ return getFilteredStores().map(s => ({key:s.key, store:s.store, category:s.category, ...derive(ytdRaw(s, selMonthIdx)), __isL2L: isL2LYtd(s, selMonthIdx)})); }
+
+// Rows for a "target-only" month (current-year sales not uploaded yet, only the target is
+// known). Shows last year's sales for the same month, last month's CY sales (most recent
+// actual), the target, and the growth the target implies vs last year same month.
+function monthTargetOnlyRows(){
+  return getFilteredStores().map(s => {
+    const cur = monthRaw(s, selMonthIdx);
+    const prev = selMonthIdx>0 ? monthRaw(s, selMonthIdx-1) : null;
+    const sales25 = cur.sales25;
+    const target26 = cur.target26;
+    const prevSales26 = prev ? prev.sales26 : null;
+    const growth = (sales25>0 && target26!=null) ? (target26-sales25)/sales25*100 : null;
+    return { key:s.key, store:s.store, category:s.category, sales25, prevSales26, target26, growth };
+  });
+}
+// A month is "target-only" when every filtered store has zero current-year sales for it
+// (nothing uploaded yet) but at least one store has a target set.
+function isTargetOnlyMonth(rows){
+  return rows.length>0 && rows.every(r=>!(r.sales26>0)) && rows.some(r=>(r.target26||0)>0);
+}
+
+// Rows for the YTD "like-for-like" growth view: each store's sales/bills/qty are
+// summed ONLY over the months where it traded in both years (see ytdL2LStats),
+// so a store that opened mid-year is compared fairly on just its overlapping months.
+function ytdL2LRows(){
+  return getFilteredStores().map(s => {
+    const t = ytdL2LStats(s, selMonthIdx);
+    const abv25 = t.bills25>0 ? t.sales25/t.bills25 : null;
+    const abv26 = t.bills26>0 ? t.sales26/t.bills26 : null;
+    const basket25 = t.bills25>0 ? t.qty25/t.bills25 : null;
+    const basket26 = t.bills26>0 ? t.qty26/t.bills26 : null;
+    const yoy = t.sales25>0 ? (t.sales26-t.sales25)/t.sales25*100 : null;
+    return {
+      key: s.key, store: s.store, category: s.category,
+      sales25: t.sales25, sales26: t.sales26, bills25: t.bills25, bills26: t.bills26,
+      abv25, abv26, basket25, basket26, yoy,
+      __isL2L: t.qualMonths > 0, __qualMonths: t.qualMonths,
+    };
+  }).filter(r => r.__isL2L);
+}
+
+function aggregate(rows, l2lRowsOverride){
+  const target26 = rows.reduce((a,r)=>a+(r.target26||0),0);
+  const sales26 = rows.reduce((a,r)=>a+(r.sales26||0),0);
+  const target25 = rows.reduce((a,r)=>a+(r.target25||0),0);
+  const sales25 = rows.reduce((a,r)=>a+(r.sales25||0),0);
+  const bills26 = rows.reduce((a,r)=>a+(r.bills26||0),0);
+  const bills25 = rows.reduce((a,r)=>a+(r.bills25||0),0);
+  const qty26 = rows.reduce((a,r)=>a+((r.basket26||0)*(r.bills26||0)),0);
+  const qty25 = rows.reduce((a,r)=>a+((r.basket25||0)*(r.bills25||0)),0);
+  const l2l = l2lRowsOverride || rows.filter(r=>r.__isL2L);
+  const l2lSales25 = l2l.reduce((a,r)=>a+r.sales25,0);
+  const l2lSales26 = l2l.reduce((a,r)=>a+r.sales26,0);
+  const newStores = rows.filter(r=>r.sales25===0 && r.sales26>0).map(r=>r.store);
+  const closedStores = rows.filter(r=>r.sales26===0 && r.sales25>0).map(r=>r.store);
+  return {
+    target26, sales26, target25, sales25, bills26, bills25, qty26, qty25,
+    ach26: target26>0 ? sales26/target26*100 : null,
+    yoyAll: sales25>0 ? (sales26-sales25)/sales25*100 : null,
+    abv26: bills26>0 ? sales26/bills26 : null,
+    abv25: bills25>0 ? sales25/bills25 : null,
+    basket26: bills26>0 ? qty26/bills26 : null,
+    basket25: bills25>0 ? qty25/bills25 : null,
+    l2lCount: l2l.length,
+    l2lGrowth: l2lSales25>0 ? (l2lSales26-l2lSales25)/l2lSales25*100 : null,
+    newStores, closedStores,
+  };
+}
+
+// ---------------- RENDER: FILTER BAR ----------------
+function renderMonthPills(){
+  const sel = document.getElementById("monthSelect");
+  sel.innerHTML = MONTHS.map((m,i)=>`<option value="${i}" ${i===selMonthIdx?"selected":""}>${m}</option>`).join("");
+}
+function renderCatPills(){
+  const sel = document.getElementById("catSelect");
+  const cats = ["All", ...CATEGORIES];
+  sel.innerHTML = cats.map(c=>`<option value="${esc(c)}" ${c===selCategory?"selected":""}>${esc(c)}</option>`).join("");
+}
+document.getElementById("monthSelect").addEventListener("change", (e)=>{
+  selMonthIdx = parseInt(e.target.value);
+  renderAll();
+});
+document.getElementById("catSelect").addEventListener("change", (e)=>{
+  selCategory = e.target.value;
+  renderAll();
+});
+document.querySelectorAll("#monthViewTabs .pill").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#monthViewTabs .pill").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    monthView = btn.dataset.view;
+    document.getElementById("monthGrowthSubToggle").style.display = monthView==="growth" ? "flex":"none";
+    renderAll();
+  });
+});
+document.querySelectorAll("#ytdViewTabs .pill").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#ytdViewTabs .pill").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    ytdView = btn.dataset.view;
+    document.getElementById("ytdGrowthSubToggle").style.display = ytdView==="growth" ? "flex":"none";
+    renderAll();
+  });
+});
+document.querySelectorAll("#monthGrowthSubToggle .sub-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#monthGrowthSubToggle .sub-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active"); monthGrowthMode = btn.dataset.mode; renderAll();
+  });
+});
+document.querySelectorAll("#ytdGrowthSubToggle .sub-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#ytdGrowthSubToggle .sub-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active"); ytdGrowthMode = btn.dataset.mode; renderAll();
+  });
+});
+
+// ---------------- RENDER: CATEGORY COMPARISON ----------------
+function renderCategoryComparison(){
+  const yl = yearLabels(MONTHS[selMonthIdx]);
+  document.getElementById("catCompSub").textContent =
+    `Cumulative Apr \u2192 ${MONTHS[selMonthIdx]} ${yl.cy}, regardless of the category filter above`;
+
+  const catAgg = {};
+  CATEGORIES.forEach(cat=>{
+    const catStores = STORES.filter(s=>s.category===cat);
+    const rows = catStores.map(s => ({store:s.store, ...derive(ytdRaw(s, selMonthIdx))}));
+    const l2lRows = catStores.map(s => {
+      const t = ytdL2LStats(s, selMonthIdx);
+      return { store:s.store, sales25:t.sales25, sales26:t.sales26, __qualMonths:t.qualMonths };
+    }).filter(r => r.__qualMonths > 0);
+    catAgg[cat] = { ...aggregate(rows, l2lRows), count: rows.length };
+  });
+
+  const metrics = [
+    { label:"Stores", get:(a)=>String(a.count) },
+    { label:"Target", get:(a)=>fmtLakh(a.target26) },
+    { label:"Achieved", get:(a)=>fmtLakh(a.sales26) },
+    { label:"Achievement %", get:(a)=>a.ach26==null?"N/A":a.ach26.toFixed(1)+"%", cls:(a)=>a.ach26==null?"muted":(a.ach26>=100?"pos":"neg") },
+    { label:`ABV (${yl.cy})`, get:(a)=>fmtInr(a.abv26) },
+    { label:`ABV (${yl.ly})`, get:(a)=>fmtInr(a.abv25) },
+    { label:`Basket (${yl.cy})`, get:(a)=>a.basket26==null?"-":a.basket26.toFixed(2) },
+    { label:`Basket (${yl.ly})`, get:(a)=>a.basket25==null?"-":a.basket25.toFixed(2) },
+    { label:"L2L Growth %", get:(a)=>fmtPct(a.l2lGrowth), cls:(a)=>a.l2lGrowth==null?"muted":(a.l2lGrowth>=0?"pos":"neg"), bold:true },
+    { label:"L2L Stores", get:(a)=>`${a.l2lCount} of ${a.count}` },
+  ];
+
+  const catClass = {"COCO-TN":"coco","FOFO-TN":"fofo","Other States":"other"};
+  let html = `<table class="cat-table"><thead><tr><th class="cat-table-metric">Metric</th>${
+    CATEGORIES.map(cat=>`<th class="cat-table-head ${catClass[cat]||''}">${esc(cat)}</th>`).join("")
+  }</tr></thead><tbody>`;
+  metrics.forEach(m=>{
+    html += `<tr><td class="cat-table-metric">${esc(m.label)}</td>${
+      CATEGORIES.map(cat=>{
+        const a = catAgg[cat];
+        const cls = m.cls ? m.cls(a) : "";
+        return `<td class="cat-table-val ${cls} ${m.bold?'bold':''}">${m.get(a)}</td>`;
+      }).join("")
+    }</tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById("catRow").innerHTML = html;
+}
+
+// ---------------- RENDER: KPI ROWS ----------------
+function kpiCardsHtml(agg, periodLabel, yl, totalStores){
+  const cards = [
+    { label:"Target", value: fmtLakh(agg.target26), sub: periodLabel },
+    { label:"Achieved", value: fmtLakh(agg.sales26), sub: "Net sales" },
+    { label:"Achievement %", value: agg.ach26==null?"N/A":agg.ach26.toFixed(1)+"%", sub:"vs target", cls: agg.ach26>=100?"up":"down" },
+    { label:"Previous Sales", value: fmtLakh(agg.sales25), sub: `${yl.ly}` },
+    { label:"Growth %", value: fmtPct(agg.yoyAll), sub:`vs ${yl.ly}`, cls: agg.yoyAll==null?"":(agg.yoyAll>=0?"up":"down") },
+    { label:"Like-for-Like Growth", value: fmtPct(agg.l2lGrowth), sub:`${agg.l2lCount} of ${totalStores} stores compared`, cls: agg.l2lGrowth>=0?"up":"down" },
+  ];
+  return cards.map(k=>
+    `<div class="kpi-card"><div class="label">${esc(k.label)}</div><div class="value">${esc(k.value)}</div><div class="sub ${k.cls||''}">${esc(k.sub)}</div></div>`
+  ).join("");
+}
+
+function renderKpis(){
+  const mRows = monthRows();
+  const yRows = ytdRows();
+  const mAgg = aggregate(mRows);
+  const yAgg = aggregate(yRows, ytdL2LRows());
+  const yl = yearLabels(MONTHS[selMonthIdx]);
+  const totalStores = getFilteredStores().length;
+
+  document.getElementById("monthKpiTitle").textContent = `This Month — ${MONTHS[selMonthIdx]} ${yl.cy}${selCategory!=='All' ? ' · '+selCategory : ''}`;
+  document.getElementById("monthKpiRow").innerHTML = kpiCardsHtml(mAgg, `${MONTHS[selMonthIdx]} ${yl.cy} target`, yl, totalStores);
+
+  document.getElementById("ytdKpiTitle").textContent = `Year to Date — Apr to ${MONTHS[selMonthIdx]} ${yl.cy}${selCategory!=='All' ? ' · '+selCategory : ''}`;
+  document.getElementById("ytdKpiRow").innerHTML = kpiCardsHtml(yAgg, `Apr\u2013${MONTHS[selMonthIdx]} ${yl.cy} target`, yl, totalStores);
+
+  const noteBits = [];
+  noteBits.push(`<b>Reported vs like-for-like (YTD):</b> overall YTD sales growth of ${fmtPct(yAgg.yoyAll)} vs like-for-like growth of <b>${fmtPct(yAgg.l2lGrowth)}</b> across ${yAgg.l2lCount} of ${totalStores} stores compared (each compared only on the months it was trading in both years \u2014 e.g. a store opened Aug ${yl.ly} is compared Aug ${yl.cy} vs Aug ${yl.ly} only).`);
+  if(yAgg.newStores.length) noteBits.push(`New stores this period: ${esc(yAgg.newStores.join(", "))}.`);
+  if(yAgg.closedStores.length) noteBits.push(`No ${yl.cy}-range activity but had sales in ${yl.ly}: ${esc(yAgg.closedStores.join(", "))}.`);
+  document.getElementById("coverageNote").innerHTML = noteBits.join(" ");
+}
+
+// ---------------- RENDER: BAR CHARTS ----------------
+function renderLegend(elId, items){
+  document.getElementById(elId).innerHTML = items.map(i=>
+    `<span><span class="legend-dot" style="background:${i.color}"></span>${esc(i.label)}</span>`).join("");
+}
+
+function renderGroupedHBar(containerId, list, series){
+  const maxVal = Math.max(1, ...list.flatMap(s => series.map(sr => (s[sr.key]||0))));
+  const rows = list.map(s => {
+    const bars = series.map((sr,i) => {
+      const val = s[sr.key] || 0;
+      const pct = (val / maxVal) * 100;
+      const topOffset = i * 20;
+      return `<div class="hbar-seg" style="left:0; top:${topOffset}px; width:${pct}%; background:${sr.color};">
+                <span class="hbar-val">₹${Math.round(val).toLocaleString("en-IN")}</span>
+              </div>`;
+    }).join("");
+    const trackHeight = series.length * 20;
+    return `<div class="hbar-row">
+      <div class="hbar-label" title="${esc(s.store)}">${esc(s.store)}</div>
+      <div class="hbar-track" style="height:${trackHeight}px;">${bars}</div>
+    </div>`;
+  }).join("");
+  document.getElementById(containerId).innerHTML = rows || `<p class="muted" style="font-size:12px;">No stores match this filter.</p>`;
+}
+
+function renderDivergingBar(containerId, list){
+  const maxAbs = Math.max(1, ...list.map(s => Math.abs(s.__yoyVal ?? 0)));
+  const rows = list.map(s => {
+    const v = s.__yoyVal;
+    if(v == null){
+      return `<div class="div-row">
+        <div class="hbar-label" title="${esc(s.store)}">${esc(s.store)}</div>
+        <div class="div-track"><div class="div-center" style="left:50%;"></div><span class="div-val muted" style="left:52%;">N/A</span></div>
+      </div>`;
+    }
+    const halfPct = 50;
+    const barPct = (Math.abs(v)/maxAbs) * halfPct;
+    const isPos = v >= 0;
+    const left = isPos ? 50 : (50 - barPct);
+    const valLeft = isPos ? `calc(50% + ${barPct}% + 4px)` : `calc(50% - ${barPct}% - 34px)`;
+    return `<div class="div-row">
+      <div class="hbar-label" title="${esc(s.store)}">${esc(s.store)}</div>
+      <div class="div-track">
+        <div class="div-center" style="left:50%;"></div>
+        <div class="div-bar ${isPos?'pos':'neg'}" style="left:${left}%; width:${barPct}%;"></div>
+        <span class="div-val" style="left:${valLeft};">${v>=0?'+':''}${v.toFixed(0)}%</span>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById(containerId).innerHTML = rows || `<p class="muted" style="font-size:12px;">No stores match this filter.</p>`;
+}
+
+function renderChartForView(chartElId, legendElId, rows, view, growthMode, l2lRowsOverride){
+  const byAchDesc = [...rows].sort((a,b)=>{
+    if(a.ach26==null) return 1; if(b.ach26==null) return -1; return b.ach26-a.ach26;
+  });
+  if(view==="target"){
+    renderLegend(legendElId, [{color:ICE,label:"Target (₹)"},{color:NAVY,label:"Achieved (₹)"}]);
+    renderGroupedHBar(chartElId, byAchDesc, [{key:"target26",color:ICE},{key:"sales26",color:NAVY}]);
+  } else if(view==="combined"){
+    renderLegend(legendElId, [{color:ICE,label:"Target (₹)"},{color:NAVY,label:"Achieved CY (₹)"},{color:SLATE,label:"Sales LY (₹)"}]);
+    renderGroupedHBar(chartElId, byAchDesc, [{key:"target26",color:ICE},{key:"sales26",color:NAVY},{key:"sales25",color:SLATE}]);
+  } else {
+    renderLegend(legendElId, [{color:GREEN,label:"Growth"},{color:RED,label:"Decline"}]);
+    let list = growthMode==="l2l" ? (l2lRowsOverride || rows.filter(r=>r.__isL2L)) : rows;
+    list = list.map(r => ({...r, __yoyVal: r.yoy!=null ? r.yoy : (r.sales25>0 ? -100 : null)}));
+    list.sort((a,b)=>{
+      if(a.__yoyVal==null) return 1; if(b.__yoyVal==null) return -1; return b.__yoyVal - a.__yoyVal;
+    });
+    renderDivergingBar(chartElId, list);
+  }
+}
+
+// ---------------- RENDER: TABLES ----------------
+function cellHtml(s, col, isTotal){
+  const v = s[col.key];
+  if(isTotal && col.key==="category") return `<td></td>`;
+  let text, cls = "";
+  switch(col.fmt){
+    case "lakh": text = fmtLakh(v); break;
+    case "inr": text = fmtInr(v); break;
+    case "num": text = fmtNum(v); break;
+    case "basket": text = (v==null?"-":v.toFixed(2)); break;
+    case "pctColor": text = (v==null?"N/A":v.toFixed(0)+"%"); cls = v==null?"muted":(v>=100?"pos":"neg"); break;
+    case "yoyColor": text = fmtPct(v); cls = v==null?"muted":(v>=0?"pos":"neg"); break;
+    default: text = esc(v);
+  }
+  if(col.align==="left") return `<td>${esc(v)}</td>`;
+  return `<td class="num ${cls}">${text}</td>`;
+}
+
+const COLUMN_SETS = {
+  target: [
+    {key:"store", label:"Store", align:"left"},
+    {key:"target26", label:"Target", fmt:"lakh"},
+    {key:"sales26", label:"Achieved", fmt:"lakh"},
+    {key:"ach26", label:"Ach %", fmt:"pctColor"},
+  ],
+  growth: [
+    {key:"store", label:"Store", align:"left"},
+    {key:"sales25", label:"Sales ({LY})", fmt:"lakh"},
+    {key:"sales26", label:"Sales ({CY})", fmt:"lakh"},
+    {key:"yoy", label:"Growth %", fmt:"yoyColor"},
+  ],
+  combined: [
+    {key:"store", label:"Store", align:"left"},
+    {key:"target26", label:"Target", fmt:"lakh"},
+    {key:"sales26", label:"Achieved", fmt:"lakh"},
+    {key:"ach26", label:"Ach %", fmt:"pctColor"},
+    {key:"sales25", label:"Sales ({LY})", fmt:"lakh"},
+    {key:"yoy", label:"Growth %", fmt:"yoyColor"},
+  ],
+  targetOnly: [
+    {key:"store", label:"Store", align:"left"},
+    {key:"sales25", label:"{LY} Sales (Same Month)", fmt:"lakh"},
+    {key:"prevSales26", label:"Last Month Sales ({CY})", fmt:"lakh"},
+    {key:"target26", label:"Target", fmt:"lakh"},
+    {key:"growth", label:"Growth % (Target vs {LY})", fmt:"yoyColor"},
+  ],
+};
+const DEFAULT_SORT = { target:"category", growth:"category", combined:"category" };
+const CATEGORY_RANK = { "COCO-TN":0, "FOFO-TN":1, "Other States":2, "Discontinued":3 };
+
+// ---------------- Canonical store order (fixed business ordering) ----------------
+const CANONICAL_ORDER = {
+  "COCO-TN": ["EXPRESS AVENUE","VELACHERY","SALEM","KRISHNAGIRI","CROSS-CUT ROAD"],
+  "FOFO-TN": ["SHANTHI COLONY","ASHOK NAGAR","SELAIYUR","PONDY BAZAAR","ADYAR","SIRUSERI","MOGAPPAIR","KOLATHUR","AVADI","PORUR","CHROMPET","ANNA NAGAR","PURASAIWAKKAM","PONDICHERRY","COIMBATORE","THUDIYALUR","RS PURAM","NEELAMBUR","VELLORE","TRICHY","MADURAI","NAGERCOIL","KOVILPATTI","ERODE","VIRUDHUNAGAR","THOOTHUKUDI","NAMAKKAL","SIVAGANGAI","RAMANATHAPURAM","TIRUNELVELI","CUDDALORE","PERAMBALUR"],
+  "Other States": ["NELLORE","VIJAYAWADA","MYSORE","WARANGAL","VANASTALIPURAM","KARIMNAGAR"],
+};
+function normStoreName(s){ return String(s).toUpperCase().replace(/\s+/g," ").trim(); }
+const STORE_RANK = {};
+Object.values(CANONICAL_ORDER).flat().forEach((name,i)=>{ STORE_RANK[normStoreName(name)] = i; });
+function storeRank(name){ const r = STORE_RANK[normStoreName(name)]; return r==null ? 9999 : r; }
+
+// ---------------- Actual calendar year labels (replace generic "this/last year") ----------------
+function yearLabels(monthKey){
+  return { cy: calendarYear(monthKey, CY_BASE_YEAR), ly: calendarYear(monthKey, LY_BASE_YEAR) };
+}
+
+function computeGroupTotal(groupRows, l2lGroupRows){
+  const target26 = groupRows.reduce((a,r)=>a+(r.target26||0),0);
+  const sales26 = groupRows.reduce((a,r)=>a+(r.sales26||0),0);
+  const sales25 = groupRows.reduce((a,r)=>a+(r.sales25||0),0);
+  const bills26 = groupRows.reduce((a,r)=>a+(r.bills26||0),0);
+  const bills25 = groupRows.reduce((a,r)=>a+(r.bills25||0),0);
+  const qty26 = groupRows.reduce((a,r)=>a+(r.basket26||0)*(r.bills26||0),0);
+  const qty25 = groupRows.reduce((a,r)=>a+(r.basket25||0)*(r.bills25||0),0);
+  const l2lSales25 = l2lGroupRows.reduce((a,r)=>a+(r.sales25||0),0);
+  const l2lSales26 = l2lGroupRows.reduce((a,r)=>a+(r.sales26||0),0);
+  return {
+    target26, sales26, sales25, bills26, bills25,
+    ach26: target26>0 ? sales26/target26*100 : null,
+    yoy: l2lSales25>0 ? (l2lSales26-l2lSales25)/l2lSales25*100 : null, // L2L-restricted, not raw sum
+    abv26: bills26>0 ? sales26/bills26 : null,
+    abv25: bills25>0 ? sales25/bills25 : null,
+    basket26: bills26>0 ? qty26/bills26 : null,
+    basket25: bills25>0 ? qty25/bills25 : null,
+    __l2lCount: l2lGroupRows.length, __totalCount: groupRows.length,
+  };
+}
+
+// Builds one continuous list: stores in canonical order grouped by category, a subtotal
+// row after each group (growth computed from L2L-qualifying stores only), a combined
+// TN Total after FOFO-TN, and a Retail Total row at the end.
+function withCategorySubtotals(rows, l2lRows){
+  const cats = ["COCO-TN","FOFO-TN","Other States"];
+  const out = [];
+  let tnGroup = [], tnL2L = [];
+  cats.forEach(cat=>{
+    const group = rows.filter(r=>r.category===cat).sort((a,b)=>storeRank(a.store)-storeRank(b.store));
+    if(!group.length) return;
+    const l2lGroup = l2lRows.filter(r=>r.category===cat);
+    group.forEach(r=>out.push({...r, __rowType:"store"}));
+    out.push({...computeGroupTotal(group,l2lGroup), category:cat, store:`${cat} Total`, __rowType:"subtotal"});
+    if(cat==="COCO-TN"||cat==="FOFO-TN"){ tnGroup.push(...group); tnL2L.push(...l2lGroup); }
+    if(cat==="FOFO-TN" && tnGroup.length){
+      out.push({...computeGroupTotal(tnGroup,tnL2L), store:"TN Total", __rowType:"tntotal"});
+    }
+  });
+  out.push({...computeGroupTotal(rows,l2lRows), store:"Retail Total", __rowType:"grandtotal"});
+  return out;
+}
+
+const tableState = {
+  month: { sortKey:"category", sortDir:1 },
+  ytd: { sortKey:"category", sortDir:1 },
+};
+
+function buildTable(prefix, rows, growthMode, l2lRowsOverride, colsOverride){
+  const yl = yearLabels(MONTHS[selMonthIdx]);
+  const labelFor = (lbl) => lbl.replace("{LY}", yl.ly).replace("{CY}", yl.cy);
+  const view = prefix==="month" ? monthView : ytdView;
+  const cols = colsOverride || COLUMN_SETS[view];
+  const headEl = document.getElementById(prefix+"TableHead");
+  headEl.innerHTML = `<tr>${cols.map(c=>`<th data-key="${c.key}">${esc(labelFor(c.label))}</th>`).join("")}</tr>`;
+  headEl.querySelectorAll("th").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const st = tableState[prefix];
+      const key = th.dataset.key;
+      if(st.sortKey===key) st.sortDir *= -1; else { st.sortKey = key; st.sortDir = (key==="store"||key==="category")?1:-1; }
+      renderTable(prefix, rows, growthMode, l2lRowsOverride, colsOverride);
+    });
+  });
+
+  let filtered = rows;
+  if(!colsOverride && view==="growth"){
+    filtered = growthMode==="l2l" ? (l2lRowsOverride || rows.filter(r=>r.__isL2L)) : rows;
+  }
+  const q = document.getElementById(prefix+"Search").value.trim().toLowerCase();
+  filtered = filtered.filter(r=>r.store.toLowerCase().includes(q));
+
+  const st = tableState[prefix];
+  filtered = [...filtered].sort((a,b)=>{
+    if(st.sortKey === "category"){
+      const ra = CATEGORY_RANK[a.category] ?? 99, rb = CATEGORY_RANK[b.category] ?? 99;
+      if(ra !== rb) return st.sortDir * (ra - rb);
+      return storeRank(a.store) - storeRank(b.store); // canonical business order within category
+    }
+    let av=a[st.sortKey], bv=b[st.sortKey];
+    if(av==null) av = typeof bv==="string" ? "" : -Infinity;
+    if(bv==null) bv = typeof av==="string" ? "" : -Infinity;
+    if(typeof av==="string") return st.sortDir * av.localeCompare(bv);
+    return st.sortDir * (av-bv);
+  });
+
+  document.getElementById(prefix+"RowCount").textContent = filtered.length + " stores";
+
+  // Show category subtotals + Retail Total only in the default (canonical-order) view,
+  // and only when not actively searching — a filtered subset's subtotal would mislead.
+  let displayRows = filtered;
+  if(!colsOverride && st.sortKey === "category" && !q){
+    const l2lSource = (view==="growth" && growthMode==="l2l")
+      ? (l2lRowsOverride || rows.filter(r=>r.__isL2L))
+      : rows.filter(r=>r.__isL2L);
+    displayRows = withCategorySubtotals(filtered, l2lSource);
+  }
+
+  document.getElementById(prefix+"TableBody").innerHTML = displayRows.map(s=>{
+    const isTotal = s.__rowType==="subtotal" || s.__rowType==="grandtotal" || s.__rowType==="tntotal";
+    const rowCls = s.__rowType==="grandtotal" ? "row-grandtotal" : (s.__rowType==="subtotal"||s.__rowType==="tntotal") ? "row-subtotal" : "";
+    const clickAttrs = isTotal ? "" : `data-store-key="${esc(s.key)}" style="cursor:pointer;" title="Click to view staff performance for this store"`;
+    return `<tr class="${rowCls}" ${clickAttrs}>${cols.map(c=>cellHtml(s,c,isTotal)).join("")}</tr>`;
+  }).join("");
+  document.querySelectorAll(`#${prefix}TableBody tr[data-store-key]`).forEach(tr=>{
+    tr.addEventListener("click", ()=>{
+      const key = tr.dataset.storeKey;
+      const sel = document.getElementById("staffStoreSelect");
+      if([...sel.options].some(o=>o.value===key)){
+        sel.value = key;
+        renderStaffPerformance();
+        document.getElementById("staffStoreSelect").closest(".section").scrollIntoView({ behavior:"smooth", block:"start" });
+      }
+    });
+  });
+}
+function renderTable(prefix, rows, growthMode, l2lRowsOverride, colsOverride){ buildTable(prefix, rows, growthMode, l2lRowsOverride, colsOverride); }
+
+// ---------------- MASTER RENDER ----------------
+function renderAll(){
+  const yl = yearLabels(MONTHS[selMonthIdx]);
+  document.getElementById("headerSub").textContent =
+    `FY 2026-27 \u2022 ${MONTHS[selMonthIdx]} ${yl.cy} selected \u2022 Target vs Achievement \u2022 ${yl.ly} vs ${yl.cy} Growth \u2022 Store KPIs`;
+
+  renderMonthPills();
+  renderCatPills();
+  renderCategoryComparison();
+  renderKpis();
+
+  const mRows = monthRows();
+  const yRows = ytdRows();
+  const yL2LRows = ytdL2LRows();
+  const totalStores = getFilteredStores().length;
+  const monthTargetOnly = isTargetOnlyMonth(mRows);
+
+  const mL2LCount = mRows.filter(r=>r.__isL2L).length;
+  const monthGrowthNote = (!monthTargetOnly && monthView==="growth") ? ` \u2014 <b>${mL2LCount} of ${totalStores} stores compared</b> (like-for-like mode).` : "";
+  const ytdGrowthNote = ytdView==="growth" ? ` \u2014 <b>${yL2LRows.length} of ${totalStores} stores compared</b> (like-for-like mode).` : "";
+
+  document.getElementById("monthPerfTitle").textContent = `Month Performance — ${MONTHS[selMonthIdx]} ${yl.cy}`;
+  const partialRow = mRows.find(r => r.__partial && r.__partial.isPartial);
+  if(monthTargetOnly){
+    document.getElementById("monthPerfSub").innerHTML = `${MONTHS[selMonthIdx]} ${yl.cy} sales haven't been uploaded yet \u2014 showing ${yl.ly} sales for ${MONTHS[selMonthIdx]}, the most recent month's ${yl.cy} sales, the target, and the growth the target implies over ${yl.ly}.`;
+  } else if(partialRow){
+    const p = partialRow.__partial;
+    document.getElementById("monthPerfSub").innerHTML = `${MONTHS[selMonthIdx]} ${yl.cy} only${selCategory!=='All' ? ' · '+selCategory : ''}, filtered by the view selected below.${monthGrowthNote} ` +
+      `<b style="color:#C23B2A;">Partial month:</b> data covers days 1\u2013${p.coverageDay} of ${p.totalDays} \u2014 ${yl.ly} comparison uses the same days 1\u2013${p.coverageDay} for a fair growth%.`;
+  } else {
+    document.getElementById("monthPerfSub").innerHTML = `${MONTHS[selMonthIdx]} ${yl.cy} only${selCategory!=='All' ? ' · '+selCategory : ''}, filtered by the view selected below.${monthGrowthNote}`;
+  }
+  document.getElementById("ytdPerfTitle").textContent = `YTD Performance — Apr to ${MONTHS[selMonthIdx]} ${yl.cy}`;
+  document.getElementById("ytdPerfSub").innerHTML = `Cumulative Apr\u2013${MONTHS[selMonthIdx]} ${yl.cy}${selCategory!=='All' ? ' · '+selCategory : ''}, filtered by the view selected below.${ytdGrowthNote}`;
+
+  if(monthTargetOnly){
+    document.getElementById("monthLegend").innerHTML = "";
+    document.getElementById("monthChart").innerHTML = `<p class="muted" style="font-size:12px;">No ${yl.cy} sales uploaded yet for ${MONTHS[selMonthIdx]} \u2014 chart will appear once sales data is added.</p>`;
+  } else {
+    renderChartForView("monthChart", "monthLegend", mRows, monthView, monthGrowthMode);
+  }
+  renderChartForView("ytdChart", "ytdLegend", yRows, ytdView, ytdGrowthMode, yL2LRows);
+
+  tableState.month.sortKey = DEFAULT_SORT[monthView];
+  tableState.ytd.sortKey = DEFAULT_SORT[ytdView];
+  if(monthTargetOnly){
+    buildTable("month", monthTargetOnlyRows(), monthGrowthMode, null, COLUMN_SETS.targetOnly);
+  } else {
+    buildTable("month", mRows, monthGrowthMode);
+  }
+  buildTable("ytd", yRows, ytdGrowthMode, yL2LRows);
+
+  renderStaffStoreOptions();
+  renderStaffPerformance();
+}
+
+document.getElementById("monthSearch").addEventListener("input", ()=>{
+  const mRows = monthRows();
+  if(isTargetOnlyMonth(mRows)){
+    buildTable("month", monthTargetOnlyRows(), monthGrowthMode, null, COLUMN_SETS.targetOnly);
+  } else {
+    buildTable("month", mRows, monthGrowthMode);
+  }
+});
+document.getElementById("ytdSearch").addEventListener("input", ()=>buildTable("ytd", ytdRows(), ytdGrowthMode, ytdL2LRows()));
+
+// =====================================================================
+// ---------------- DATA MANAGER: CSV parsing & merge ----------------
+// =====================================================================
+
+const MONTH_LOOKUP = {
+  jan:"Jan", january:"Jan", feb:"Feb", february:"Feb", mar:"Mar", march:"Mar",
+  apr:"Apr", april:"Apr", may:"May", jun:"Jun", june:"Jun", jul:"Jul", july:"Jul",
+  aug:"Aug", august:"Aug", sep:"Sep", sept:"Sep", september:"Sep",
+  oct:"Oct", october:"Oct", nov:"Nov", november:"Nov", dec:"Dec", december:"Dec",
+};
+const FISCAL_ORDER = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+function monthKeyFromLabel(label){
+  const clean = String(label).trim().toLowerCase().replace(/[^a-z]/g, "").slice(0, 9);
+  for(const k in MONTH_LOOKUP){
+    if(clean.startsWith(k)) return MONTH_LOOKUP[k];
+  }
+  // try matching just first 3 letters
+  const abbr3 = clean.slice(0,3);
+  return MONTH_LOOKUP[abbr3] || null;
+}
+function sortMonths(list){
+  return [...list].sort((a,b)=>FISCAL_ORDER.indexOf(a)-FISCAL_ORDER.indexOf(b));
+}
+
+function normKey(s){
+  return String(s).toUpperCase().replace(/\s+/g,"").replace(/-/g,"").trim();
+}
+const KEY_ALIAS = { "EA":"EXPRESSAVENUE", "KOVILPATTTI":"KOVILPATTI" };
+function keyOf(s){
+  const k = normKey(s);
+  return KEY_ALIAS[k] || k;
+}
+function titleCase(s){
+  return String(s).trim().toLowerCase().replace(/\b\w/g, c=>c.toUpperCase());
+}
+
+// Minimal CSV parser: handles quoted fields with commas/newlines
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i++; } else { inQuotes = false; }
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ","){ row.push(field); field=""; }
+      else if(c === "\n"){ row.push(field); rows.push(row); row=[]; field=""; }
+      else if(c === "\r"){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length>1 || (r.length===1 && r[0].trim()!==""));
+}
+
+function findHeaderRowIdx(rows, mustHave){
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    const lower = rows[i].map(c=>String(c).trim().toLowerCase());
+    if(mustHave.every(h => lower.includes(h))) return i;
+  }
+  return -1;
+}
+
+// Returns { [storeKey]: { [monthKey]: {sales, bills, qty} } }, plus displayNames map
+function parseSalesCSV(text){
+  const rows = parseCSV(text);
+  const hdrIdx = findHeaderRowIdx(rows, ["location","bill date","bill code","bill amount","net qty"]);
+  if(hdrIdx === -1) throw new Error("Could not find header row with Location, Bill Date, Bill Code, Bill Amount, Net Qty columns.");
+  const header = rows[hdrIdx].map(c=>String(c).trim().toLowerCase());
+  const col = name => header.indexOf(name);
+  const cLoc=col("location"), cDate=col("bill date"), cBill=col("bill code"), cAmt=col("bill amount"), cQty=col("net qty");
+  const cProd = col("product")>=0 ? col("product") : (col("item")>=0 ? col("item") : col("category"));
+  const cSalesman = col("salesman"); // optional column
+
+  const billSets = {}; // key: storeKey|monthKey -> Set of bill codes
+  const dayBillSets = {}; // key: storeKey|monthKey|day -> Set of bill codes
+  const staffBillSets = {}; // key: storeKey|monthKey|staff -> Set of bill codes
+  const staffDaySets = {}; // key: storeKey|monthKey|staff -> Set of days
+  const agg = {}; // storeKey -> monthKey -> {sales, qty}
+  const dayAgg = {}; // storeKey -> monthKey -> day -> {sales, qty}
+  const staffAgg = {}; // storeKey -> monthKey -> staffName -> {sales, qty}
+  const displayNames = {};
+
+  for(let i=hdrIdx+1;i<rows.length;i++){
+    const r = rows[i];
+    const loc = r[cLoc];
+    if(!loc || !String(loc).trim()) continue;
+    const key = keyOf(String(loc).replace(/^MAYBELL-/i,""));
+    if(key === "HEADOFFICE") continue;
+    const product = String(r[cProd]||"");
+    if(product.toUpperCase().includes("CARRYBAG")) continue;
+
+    const dateStr = String(r[cDate]||"").trim();
+    const dm = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+    let monthKey = null, dayNum = null;
+    if(dm){
+      const mIdx = parseInt(dm[2],10)-1;
+      monthKey = MONTH_NAMES_CAL[mIdx] || null;
+      dayNum = parseInt(dm[1],10);
+    } else {
+      const d = new Date(dateStr);
+      if(!isNaN(d)){ monthKey = MONTH_NAMES_CAL[d.getMonth()]; dayNum = d.getDate(); }
+    }
+    if(!monthKey) continue;
+
+    const staffName = (cSalesman>=0 && r[cSalesman] && String(r[cSalesman]).trim()) ? String(r[cSalesman]).trim() : "Unassigned";
+    const billCode = (r[cBill]!=null && String(r[cBill]).trim()!=="") ? String(r[cBill]) : null;
+    const amt = parseFloat(r[cAmt]) || 0;
+    const qty = parseFloat(r[cQty]) || 0;
+
+    displayNames[key] = displayNames[key] || titleCase(String(loc).replace(/^MAYBELL-/i,""));
+
+    agg[key] = agg[key] || {};
+    agg[key][monthKey] = agg[key][monthKey] || {sales:0, qty:0};
+    agg[key][monthKey].sales += amt; agg[key][monthKey].qty += qty;
+    const billKey = key+"|"+monthKey;
+    billSets[billKey] = billSets[billKey] || new Set();
+    if(billCode) billSets[billKey].add(billCode);
+
+    if(dayNum){
+      dayAgg[key] = dayAgg[key] || {}; dayAgg[key][monthKey] = dayAgg[key][monthKey] || {};
+      dayAgg[key][monthKey][dayNum] = dayAgg[key][monthKey][dayNum] || {sales:0, qty:0};
+      dayAgg[key][monthKey][dayNum].sales += amt; dayAgg[key][monthKey][dayNum].qty += qty;
+      const dayKey = key+"|"+monthKey+"|"+dayNum;
+      dayBillSets[dayKey] = dayBillSets[dayKey] || new Set();
+      if(billCode) dayBillSets[dayKey].add(billCode);
+    }
+
+    staffAgg[key] = staffAgg[key] || {}; staffAgg[key][monthKey] = staffAgg[key][monthKey] || {};
+    staffAgg[key][monthKey][staffName] = staffAgg[key][monthKey][staffName] || {sales:0, qty:0};
+    staffAgg[key][monthKey][staffName].sales += amt; staffAgg[key][monthKey][staffName].qty += qty;
+    const staffKey = key+"|"+monthKey+"|"+staffName;
+    staffBillSets[staffKey] = staffBillSets[staffKey] || new Set();
+    if(billCode) staffBillSets[staffKey].add(billCode);
+    if(dayNum){
+      staffDaySets[staffKey] = staffDaySets[staffKey] || new Set();
+      staffDaySets[staffKey].add(dayNum);
+    }
+  }
+
+  for(const key in agg){
+    for(const m in agg[key]){
+      agg[key][m].bills = (billSets[key+"|"+m] || new Set()).size;
+    }
+  }
+  // finalize day-level bills
+  for(const key in dayAgg){
+    for(const m in dayAgg[key]){
+      for(const d in dayAgg[key][m]){
+        dayAgg[key][m][d].bills = (dayBillSets[key+"|"+m+"|"+d] || new Set()).size;
+      }
+    }
+  }
+  // finalize staff-level bills + days
+  for(const key in staffAgg){
+    for(const m in staffAgg[key]){
+      for(const staff in staffAgg[key][m]){
+        const sk = key+"|"+m+"|"+staff;
+        staffAgg[key][m][staff].bills = (staffBillSets[sk] || new Set()).size;
+        staffAgg[key][m][staff].days = (staffDaySets[sk] || new Set()).size;
+      }
+    }
+  }
+  return { agg, dayAgg, staffAgg, displayNames };
+}
+
+// Returns { [storeKey]: {category, target:{monthKey:val}} }, monthsFound, displayNames
+function parseTargetCSV(text){
+  const rows = parseCSV(text);
+  const hdrIdx = findHeaderRowIdx(rows, ["stores"]);
+  if(hdrIdx === -1) throw new Error("Could not find header row with a STORES column.");
+  const header = rows[hdrIdx].map(c=>String(c).trim());
+  const lowerHeader = header.map(h=>h.toLowerCase());
+  const cStore = lowerHeader.indexOf("stores");
+  const cCat = lowerHeader.findIndex(h=>h.includes("categor"));
+  const monthCols = []; // {idx, monthKey}
+  header.forEach((h, idx)=>{
+    if(idx===cStore || idx===cCat) return;
+    const mk = monthKeyFromLabel(h);
+    if(mk) monthCols.push({idx, monthKey:mk});
+  });
+  if(!monthCols.length) throw new Error("Could not find any month columns (e.g. AUGUST) in the target file header.");
+
+  const out = {}; const displayNames = {}; const monthsFound = new Set();
+  for(let i=hdrIdx+1;i<rows.length;i++){
+    const r = rows[i];
+    const storeName = r[cStore];
+    if(!storeName || !String(storeName).trim()) continue;
+    const key = keyOf(storeName);
+    displayNames[key] = titleCase(storeName);
+    out[key] = out[key] || { category: cCat>=0 ? String(r[cCat]||"").trim() : "Other States", target: {} };
+    if(cCat>=0 && r[cCat]) {
+      const rawCat = String(r[cCat]).trim().toUpperCase();
+      out[key].category = rawCat.includes("COCO") ? "COCO-TN" : rawCat.includes("FOFO") ? "FOFO-TN" : "Other States";
+    }
+    monthCols.forEach(({idx, monthKey})=>{
+      const v = r[idx];
+      if(v !== undefined && v !== "" && !isNaN(parseFloat(v))){
+        out[key].target[monthKey] = parseFloat(v);
+        monthsFound.add(monthKey);
+      }
+    });
+  }
+  return { targets: out, monthsFound: Array.from(monthsFound), displayNames };
+}
+
+// ---------------- Narrow-format target sheet (live Google Sheet) ----------------
+// One row per store per month, columns fuzzy-matched by name (contains "store",
+// "target"/"gross target", "month"). Returns the SAME shape as parseTargetCSV
+// (minus category, which the live Store Type sheet supplies instead), so it can
+// be merged in via mergeData's target25Data / targetData slots.
+function parseTargetNarrowCSV(text){
+  const rows = parseCSV(text);
+  const header = rows[0] ? rows[0].map(c=>String(c).trim().toLowerCase()) : [];
+  const findCol = (re) => header.findIndex(h=>re.test(h));
+  const cStore = findCol(/store/);
+  const cTarget = findCol(/target/);
+  const cMonth = findCol(/month/);
+  if(cStore===-1 || cTarget===-1 || cMonth===-1){
+    throw new Error("Could not find Store / Target / Month columns in the target sheet.");
+  }
+  const out = {}; const displayNames = {}; const monthsFound = new Set();
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    const storeName = r[cStore];
+    if(!storeName || !String(storeName).trim()) continue;
+    const monthKey = monthKeyFromLabel(r[cMonth]);
+    if(!monthKey) continue;
+    const val = parseFloat(String(r[cTarget]||"").replace(/,/g,""));
+    if(isNaN(val)) continue;
+    const key = keyOf(storeName);
+    displayNames[key] = titleCase(storeName);
+    out[key] = out[key] || { category: null, target: {} };
+    out[key].target[monthKey] = (out[key].target[monthKey]||0) + val;
+    monthsFound.add(monthKey);
+  }
+  return { targets: out, monthsFound: Array.from(monthsFound), displayNames };
+}
+
+// ---------------- Store Type sheet (live Google Sheet) ----------------
+// Fuzzy-matched Store / Type columns -> {storeKey: "COCO-TN"|"FOFO-TN"|"Other States"}
+function parseStoreTypeCSV(text){
+  const rows = parseCSV(text);
+  const header = rows[0] ? rows[0].map(c=>String(c).trim().toLowerCase()) : [];
+  const findCol = (re) => header.findIndex(h=>re.test(h));
+  const cStore = findCol(/store/);
+  const cType = findCol(/type/);
+  if(cStore===-1 || cType===-1) throw new Error("Could not find Store / Type columns in the Store Type sheet.");
+  const out = {};
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    const storeName = r[cStore];
+    const type = r[cType];
+    if(!storeName || !String(storeName).trim() || !type) continue;
+    const rawCat = String(type).trim().toUpperCase();
+    out[keyOf(storeName)] = rawCat.includes("COCO") ? "COCO-TN" : rawCat.includes("FOFO") ? "FOFO-TN" : "Other States";
+  }
+  return out;
+}
+
+function emptyMonthRaw(){
+  return { target25:null, sales25:0, bills25:0, qty25:0, target26:null, sales26:0, bills26:0, qty26:0, days25:{}, days26:{}, staff25:{}, staff26:{} };
+}
+
+function dayAggToObj(dayAggForMonth){
+  const out = {};
+  if(!dayAggForMonth) return out;
+  for(const d in dayAggForMonth){
+    const v = dayAggForMonth[d];
+    out[String(d)] = { sales: v.sales, bills: v.bills, qty: v.qty };
+  }
+  return out;
+}
+function staffAggToObj(staffAggForMonth){
+  const out = {};
+  if(!staffAggForMonth) return out;
+  for(const name in staffAggForMonth){
+    const v = staffAggForMonth[name];
+    out[name] = { sales: v.sales, bills: v.bills, qty: v.qty, days: v.days||0 };
+  }
+  return out;
+}
+
+// targetData: wide-format parse (parseTargetCSV) -> sets target26 (+ category, manual-upload path only)
+// target25Data: optional, same-shaped parse of a LY target sheet -> sets target25 only
+// storeTypeMap: optional {storeKey: "COCO-TN"|"FOFO-TN"|"Other States"} -> overrides category (live-fetch path)
+function mergeData(salesCY, salesLY, targetData, target25Data, storeTypeMap){
+  const { agg: aggCY, dayAgg: dayCY, staffAgg: staffCY, displayNames: dnCY } = salesCY;
+  const { agg: aggLY, dayAgg: dayLY, staffAgg: staffLY, displayNames: dnLY } = salesLY;
+  const { targets, monthsFound, displayNames: dnT } = targetData;
+  const target25 = (target25Data && target25Data.targets) || {};
+  const monthsFound25 = (target25Data && target25Data.monthsFound) || [];
+  const dnT25 = (target25Data && target25Data.displayNames) || {};
+  const typeMap = storeTypeMap || {};
+
+  const allKeys = new Set([...Object.keys(aggCY), ...Object.keys(aggLY), ...Object.keys(targets), ...Object.keys(target25), ...Object.keys(typeMap)]);
+  const byKey = {};
+  STORES.forEach(s => byKey[s.key] = s);
+
+  const newMonthsSet = new Set(MONTHS);
+  monthsFound.forEach(m=>newMonthsSet.add(m));
+  monthsFound25.forEach(m=>newMonthsSet.add(m));
+  Object.values(aggCY).forEach(m=>Object.keys(m).forEach(mk=>newMonthsSet.add(mk)));
+  Object.values(aggLY).forEach(m=>Object.keys(m).forEach(mk=>newMonthsSet.add(mk)));
+  const newMonths = sortMonths(Array.from(newMonthsSet));
+
+  allKeys.forEach(key=>{
+    let store = byKey[key];
+    if(!store){
+      store = { key, store: dnT[key]||dnT25[key]||dnCY[key]||dnLY[key]||titleCase(key), category: (targets[key]&&targets[key].category)||typeMap[key]||"Discontinued", m:{} };
+      byKey[key] = store;
+    } else if(targets[key] && targets[key].category){
+      store.category = targets[key].category;
+    }
+    if(typeMap[key]) store.category = typeMap[key]; // Store Type sheet always wins when present
+    newMonths.forEach(mk=>{
+      if(!store.m[mk]) store.m[mk] = emptyMonthRaw();
+      const cy = aggCY[key] && aggCY[key][mk];
+      const ly = aggLY[key] && aggLY[key][mk];
+      const tgt = targets[key] && targets[key].target[mk];
+      const tgt25 = target25[key] && target25[key].target[mk];
+      if(cy){
+        store.m[mk].sales26 = cy.sales; store.m[mk].bills26 = cy.bills; store.m[mk].qty26 = cy.qty;
+        store.m[mk].days26 = dayAggToObj(dayCY[key] && dayCY[key][mk]);
+        store.m[mk].staff26 = staffAggToObj(staffCY[key] && staffCY[key][mk]);
+      }
+      if(ly){
+        store.m[mk].sales25 = ly.sales; store.m[mk].bills25 = ly.bills; store.m[mk].qty25 = ly.qty;
+        store.m[mk].days25 = dayAggToObj(dayLY[key] && dayLY[key][mk]);
+        store.m[mk].staff25 = staffAggToObj(staffLY[key] && staffLY[key][mk]);
+      }
+      if(tgt != null){ store.m[mk].target26 = tgt; }
+      if(tgt25 != null){ store.m[mk].target25 = tgt25; }
+    });
+  });
+
+  // A store with genuine current-year activity should never be left in "Discontinued"
+  // just because the Store Type sheet doesn't (yet) list it.
+  Object.values(byKey).forEach(store=>{
+    if(store.category === "Discontinued"){
+      const hasCYActivity = Object.values(store.m).some(mm => (mm.sales26||0) > 0 || (mm.target26||0) > 0);
+      if(hasCYActivity) store.category = "Other States";
+    }
+  });
+
+  STORES = Object.values(byKey);
+  MONTHS = newMonths;
+  CATEGORIES = Array.from(new Set(STORES.map(s=>s.category))).filter(c=>c!=="Discontinued");
+  selMonthIdx = MONTHS.length - 1;
+  if(!["All", ...CATEGORIES].includes(selCategory)) selCategory = "All";
+}
+
+// ---------------- DATA MANAGER: UI wiring ----------------
+function readFileText(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+function setStatus(msg, isError){
+  const el = document.getElementById("dataMgrStatus");
+  el.textContent = msg;
+  el.style.color = isError ? "#C23B2A" : "#1E9E63";
+}
+
+// ---------------- Chart show/hide toggles ----------------
+document.querySelectorAll(".chart-toggle-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const targetEl = document.getElementById(btn.dataset.target);
+    const hidden = targetEl.style.display === "none";
+    targetEl.style.display = hidden ? "" : "none";
+    btn.textContent = hidden ? "Hide chart" : "Show chart";
+  });
+});
+
+document.getElementById("openDataMgr").addEventListener("click", ()=>{
+  document.getElementById("dataMgrOverlay").style.display = "flex";
+});
+document.getElementById("closeDataMgr").addEventListener("click", ()=>{
+  document.getElementById("dataMgrOverlay").style.display = "none";
+});
+document.getElementById("dataMgrOverlay").addEventListener("click", (e)=>{
+  if(e.target.id === "dataMgrOverlay") document.getElementById("dataMgrOverlay").style.display = "none";
+});
+
+document.getElementById("processFiles").addEventListener("click", async ()=>{
+  try {
+    const fCY = document.getElementById("fileSalesCY").files[0];
+    const fLY = document.getElementById("fileSalesLY").files[0];
+    const fT = document.getElementById("fileTargets").files[0];
+    const fST = document.getElementById("fileStaffTargets").files[0];
+    if(!fCY && !fLY && !fT && !fST){ setStatus("Choose at least one file to process.", true); return; }
+    setStatus("Processing...", false);
+
+    const salesCY = fCY ? parseSalesCSV(await readFileText(fCY)) : { agg:{}, dayAgg:{}, staffAgg:{}, displayNames:{} };
+    const salesLY = fLY ? parseSalesCSV(await readFileText(fLY)) : { agg:{}, dayAgg:{}, staffAgg:{}, displayNames:{} };
+    const targetData = fT ? parseTargetCSV(await readFileText(fT)) : { targets:{}, monthsFound:[], displayNames:{} };
+
+    mergeData(salesCY, salesLY, targetData);
+
+    if(fST){
+      const parsedStaffTargets = parseStaffTargetCSV(await readFileText(fST));
+      for(const sKey in parsedStaffTargets){
+        staffTargets[sKey] = staffTargets[sKey] || {};
+        for(const mKey in parsedStaffTargets[sKey]){
+          staffTargets[sKey][mKey] = { ...(staffTargets[sKey][mKey]||{}), ...parsedStaffTargets[sKey][mKey] };
+        }
+      }
+    }
+
+    renderAll();
+    setStatus(`Done — dashboard now covers ${MONTHS.join(", ")}. Don't forget to download a snapshot below.`, false);
+  } catch(err){
+    console.error(err);
+    setStatus("Error: " + err.message, true);
+  }
+});
+
+document.getElementById("downloadSnapshot").addEventListener("click", ()=>{
+  const snapshot = { months: MONTHS, stores: STORES, categories: [...CATEGORIES, "Discontinued"], staffTargets };
+  const blob = new Blob([JSON.stringify(snapshot)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "store_dashboard_snapshot.json";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("loadSnapshot").addEventListener("click", async ()=>{
+  try {
+    const f = document.getElementById("fileSnapshot").files[0];
+    if(!f){ setStatus("Choose a snapshot .json file first.", true); return; }
+    const text = await readFileText(f);
+    const parsed = JSON.parse(text);
+    if(!parsed.months || !parsed.stores) throw new Error("This doesn't look like a valid snapshot file.");
+    MONTHS = parsed.months;
+    STORES = parsed.stores;
+    CATEGORIES = (parsed.categories||[]).filter(c=>c!=="Discontinued");
+    staffTargets = parsed.staffTargets || {};
+    selMonthIdx = MONTHS.length - 1;
+    selCategory = "All";
+    renderAll();
+    setStatus(`Snapshot loaded — covers ${MONTHS.join(", ")}.`, false);
+  } catch(err){
+    console.error(err);
+    setStatus("Error loading snapshot: " + err.message, true);
+  }
+});
+
+// =====================================================================
+// ---------------- STAFF PERFORMANCE (store drill-down) ----------------
+// =====================================================================
+let staffTargets = {"EXPRESSAVENUE":{"Jul":{"NISHA":600000,"JAMUNA":600000,"SHAHINA":350000,"PARKAVI.K":350000,"THAMARAI SELVAN.U":0}},"VELACHERY":{"Jul":{"SEETHA":410000,"DIVYABARATHI":405000,"CHEMPARUTHI":405000,"KAVITHA":410000,"GOKUL":0,"MONIKA SRI":270000}},"SHANTHICOLONY":{"Jul":{"LOKESHBALAJI":0,"S.KOWSALYA":1400000,"ABINAYA":1400000,"SRIMATHI":600000}},"ADYAR":{"Jul":{"MONISHA":500000,"FAIZUL":500000,"MANIMALA":100000}},"MOGAPPAIR":{"Jul":{"DIVYA":275000,"GEETHA":450000,"J SUNDARI":275000,"KAVIYA":350000,"MANITA":250000}},"KOLATHUR":{"Jul":{"SIBIN .G":200000,"RASHMA":425000,"PARVEEN":425000}},"AVADI":{"Jul":{"SANTHOSH":50000,"MONISHA":390000,"INDHUMATHI V":390000,"RAGAVI M.R":390000,"NITHYA N":300000,"SANTHOSHINI R":340000,"DIVYA DHARSHINI S":340000}},"PORUR":{"Jul":{"JANANNI":270000,"KARISHMA":270000,"PRIYADHARASHNI":160000}},"CHROMPET":{"Jul":{"BHUVANA":100000,"SRUTHI":250000,"SANDHIYA":50000,"SATHIYA RAJ":300000,"ARIFA":150000,"SUSEELA":350000}},"SELAIYUR":{"Jul":{"MAGESHWARI":440000,"CHARUMATHI":440000,"DHANALAKSHMI":440000,"ASHOK":0,"SALMA":340000,"MUTHAR":340000}},"SIRUSERI":{"Jul":{"ELCIKA":210000,"AKSHAYA":430000,"SARANYA":430000,"JASMINE":430000}},"PONDYBAZAAR":{"Jul":{"ABARNA":650000,"MAHESHWARI":650000,"SHANKARI":650000,"SESHADRI":150000}},"VELLORE":{"Jul":{"AKBAR":50000,"PRIYA":500000,"NISHA FATHIMA":500000,"RANJITHA":200000}},"PONDICHERRY":{"Jul":{"RATHA":650000,"NEELAMBARI":650000,"SUREKHA":400000,"ANITHA":300000,"DHANALAKSHMI":350000,"BHAVIYA":350000}},"ASHOKNAGAR":{"Jul":{"BAKIYALAKSHMI.K":450000,"DEEPIKA":450000,"NISHA.G":450000,"SONU":350000,"ELCIKA":0,"TAMILARASI.U":200000}},"CUDDALORE":{"Jul":{"MOHAN RAJ":100000,"KOWSALYA":250000,"GOBIKA":250000}},"COIMBATORE":{"Jul":{"ASWINI S":420000,"RAHUL.A":420000,"SANTHYA.M":420000,"SARANYA":0,"SARANYA P":140000}},"SALEM":{"Jul":{"MENAKA N":300000,"MOHAMMED ANEES":50000,"SUBHA":300000,"THARANI":300000}},"KRISHNAGIRI":{"Jul":{"BOOMIKA":200000,"KAMAKSHI":200000,"PRUTHVIRAJ":20000,"SANGEETHA":230000}},"THUDIYALUR":{"Jul":{"MALINI":475000,"SELVI":475000}},"RSPURAM":{"Jul":{"SRIMATHI":450000,"RAJESH":450000}},"CROSSCUTROAD":{"Jul":{"BHAVYA":250000,"NANDHINI":400000,"PRAKASH.D":400000}},"TRICHY":{"Jul":{"ETSARO":450000,"RASIKA S":500000,"RAJKUMAR":0,"YUVA SRI":450000}},"MADURAI":{"Jul":{"HARINI":350000,"PARAMU":200000,"SHIVA DURGA":400000,"M2":700000,"SIVA RANJANI":450000}},"NAGERCOIL":{"Jul":{"MANI MOZHI":562500,"ROJA":562500,"SYED ALI":125000}},"KOVILPATTI":{"Jul":{"NANDHINI":180000,"KALEESWARI":235000,"ANDREW G":0,"VELAYUTHAM":235000}},"ERODE":{"Jul":{"SARANYA":340000,"DHIVYA":360000,"GOKUL":100000}},"VIRUDHUNAGAR":{"Jul":{"KRISHNA VENI":350000,"PRIYA":350000}},"THOOTHUKUDI":{"Jul":{"A SUDHAARRON":550000,"JEYARAJ":0,"SARANYA S":550000}},"NAMAKKAL":{"Jul":{"DEVI R":350000,"PRABHA":350000}},"SIVAGANGAI":{"Jul":{"SATHYA":200000,"JOHN":100000,"VASANTHI":200000}},"RAMANATHAPURAM":{"Jul":{"RASLEELA":350000,"DHAMODHARAN":0,"RITHIKA":350000}},"TIRUNELVELI":{"Jul":{"PEER MOHAMED":200000,"RANI":350000,"SUDHA":350000}},"NEELAMBUR":{"Jul":{"ARIVUDAI NANGAI":250000,"DIVYABHARATHI":300000,"MUTHURAMAN":150000,"NIVETHA":300000}},"PERAMBALUR":{"Jul":{"BHUVANA":350000,"MAHADEVAN":100000,"PARAMESH":350000,"THENMOLI":200000}}}; // staffTargets[storeKey][monthKey][STAFFNAME_UPPER] = target (pre-loaded: July_26_target.csv)
+
+function staffKeyOf(name){ return String(name).trim().toUpperCase(); }
+
+function getStaffListForStore(store, monthKey){
+  const rec = store.m[monthKey];
+  const staff26 = (rec && rec.staff26) || {};
+  return Object.keys(staff26)
+    .map(name => ({ name, ...staff26[name] }))
+    .filter(s => s.sales >= 0); // ignore staff whose sales are fully negative (returns-only noise, e.g. a stray refund)
+}
+
+// Managers are fed via the staff-targets upload with an explicit ZERO target — they
+// have sales tracked but no target, and are excluded from the equal-split pool.
+// A BLANK target just means "not yet assigned" — that staff falls into the normal
+// equal-split pool exactly as if they weren't in the file at all.
+function computeStaffTargets(store, monthKey, staffList){
+  const storeTarget = (store.m[monthKey] && store.m[monthKey].target26) || 0;
+  const uploaded = (staffTargets[store.key] && staffTargets[store.key][monthKey]) || {};
+  const nonUnassigned = staffList.filter(s => s.name.toUpperCase() !== "UNASSIGNED");
+
+  const result = {};
+  const managerSet = new Set();
+  let assignedSum = 0;
+
+  nonUnassigned.forEach(s=>{
+    const key = staffKeyOf(s.name);
+    if(Object.prototype.hasOwnProperty.call(uploaded, key)){
+      const val = uploaded[key];
+      if(val <= 0){
+        result[s.name] = 0; // manager — explicit zero target, excluded from equal split
+        managerSet.add(s.name);
+      } else {
+        result[s.name] = val;
+        assignedSum += val;
+      }
+    }
+  });
+
+  const eligibleForSplit = nonUnassigned.filter(s => !(s.name in result));
+  const remaining = Math.max(0, storeTarget - assignedSum);
+  const equalShare = eligibleForSplit.length > 0 ? remaining / eligibleForSplit.length : 0;
+  eligibleForSplit.forEach(s=>{ result[s.name] = equalShare; });
+
+  staffList.forEach(s=>{
+    if(s.name.toUpperCase() === "UNASSIGNED" && !(s.name in result)) result[s.name] = null;
+  });
+
+  return { targets: result, managerSet };
+}
+
+function renderStaffStoreOptions(){
+  const sel = document.getElementById("staffStoreSelect");
+  const stores = getFilteredStores().slice().sort((a,b)=>a.store.localeCompare(b.store));
+  const prevVal = sel.value;
+  sel.innerHTML = stores.map(s=>`<option value="${esc(s.key)}">${esc(s.store)}</option>`).join("");
+  if(stores.some(s=>s.key===prevVal)) sel.value = prevVal;
+  else if(stores.length) sel.value = stores[0].key;
+}
+document.getElementById("staffStoreSelect").addEventListener("change", renderStaffPerformance);
+
+function renderStaffPerformance(){
+  const sel = document.getElementById("staffStoreSelect");
+  const storeKey = sel.value;
+  const store = STORES.find(s=>s.key===storeKey);
+  const monthKey = MONTHS[selMonthIdx];
+
+  if(!store){
+    document.getElementById("staffPerfSub").textContent = "No store available for the current category filter.";
+    document.getElementById("staffTableHead").innerHTML = "";
+    document.getElementById("staffTableBody").innerHTML = "";
+    document.getElementById("staffNote").textContent = "";
+    document.getElementById("weeklyChart").innerHTML = "";
+    document.getElementById("prodCatChart").innerHTML = "";
+    return;
+  }
+  document.getElementById("staffPerfSub").textContent = `${store.store} \u2014 ${monthKey} '26 staff breakdown`;
+
+  const staffList = getStaffListForStore(store, monthKey);
+  if(!staffList.length){
+    document.getElementById("staffTableHead").innerHTML = "";
+    document.getElementById("staffTableBody").innerHTML = "";
+    document.getElementById("staffNote").textContent = `No staff-level billing data found for ${esc(store.store)} in ${monthKey} '26.`;
+  } else {
+
+  const { targets, managerSet } = computeStaffTargets(store, monthKey, staffList);
+  const hasUploaded = staffTargets[store.key] && staffTargets[store.key][monthKey];
+  const splitCount = staffList.filter(s=>s.name.toUpperCase()!=="UNASSIGNED" && !managerSet.has(s.name)).length;
+  document.getElementById("staffNote").innerHTML = hasUploaded
+    ? `Targets: uploaded where available (managers excluded from any target), equal split of the remaining target across the other ${splitCount} staff.`
+    : `Targets: store target (${fmtInr((store.m[monthKey]||{}).target26)}) split equally across ${splitCount} staff. Upload a staff-targets CSV via \u2699 Update Data for custom splits or to mark a manager (leave Target blank).`;
+
+  const headerRow = ["Staff","Target","Achieved","Ach %","ABV","Basket","Man-days"];
+  document.getElementById("staffTableHead").innerHTML = `<tr>${headerRow.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>`;
+
+  const rows = staffList.map(s=>{
+    const isManager = managerSet.has(s.name);
+    const target = targets[s.name];
+    const ach = (target && target>0) ? (s.sales/target*100) : null;
+    const abv = s.bills>0 ? s.sales/s.bills : null;
+    const basket = s.bills>0 ? s.qty/s.bills : null;
+    return { name:s.name, target, sales:s.sales, ach, abv, basket, days:s.days, isManager };
+  }).sort((a,b)=>b.sales-a.sales);
+
+  document.getElementById("staffTableBody").innerHTML = rows.map(r=>{
+    const achCls = r.ach==null ? "muted" : r.ach>=100 ? "pos" : "neg";
+    const targetCell = r.isManager ? `<span class="muted">Manager</span>` : (r.target==null?"-":fmtInr(r.target));
+    const achCell = r.isManager ? `<span class="muted">\u2014</span>` : (r.ach==null?"N/A":r.ach.toFixed(0)+"%");
+    return `<tr>
+      <td>${esc(r.name)}</td>
+      <td class="num">${targetCell}</td>
+      <td class="num">${fmtInr(r.sales)}</td>
+      <td class="num ${r.isManager?'':achCls}">${achCell}</td>
+      <td class="num">${fmtInr(r.abv)}</td>
+      <td class="num">${r.basket==null?"-":r.basket.toFixed(2)}</td>
+      <td class="num">${r.days}</td>
+    </tr>`;
+  }).join("");
+  }
+
+  renderWeeklyChart(store, monthKey);
+  renderProductCategoryChart(store, monthKey);
+}
+
+// ---------------- Week-on-week chart (Mon-Sun, first/last week may be short) ----------------
+function getWeeksOfMonth(monthKey, year){
+  const idx = MONTH_NAMES_CAL.indexOf(monthKey);
+  const totalDays = new Date(year, idx+1, 0).getDate();
+  const weeks = [];
+  let current = [];
+  for(let d=1; d<=totalDays; d++){
+    const dow = new Date(year, idx, d).getDay(); // 0=Sun..6=Sat
+    current.push(d);
+    if(dow === 0 || d === totalDays){
+      weeks.push(current);
+      current = [];
+    }
+  }
+  return weeks;
+}
+
+function renderWeeklyChart(store, monthKey){
+  const rec = store.m[monthKey] || {};
+  const days25 = rec.days25 || {};
+  const days26 = rec.days26 || {};
+  const yl = yearLabels(monthKey);
+  const weeksCY = getWeeksOfMonth(monthKey, yl.cy);
+  const weeksLY = getWeeksOfMonth(monthKey, yl.ly);
+  const weekCount = Math.max(weeksCY.length, weeksLY.length);
+
+  document.getElementById("weeklySub").textContent =
+    `Monday\u2013Sunday weeks within ${monthKey} (by week position; first/last week may be shorter) \u2014 ${store.store}`;
+  document.getElementById("weeklyLegend").innerHTML =
+    `<span><span class="legend-dot" style="background:var(--ice)"></span>${monthKey} ${yl.ly} (\u20b9)</span>` +
+    `<span><span class="legend-dot" style="background:var(--navy)"></span>${monthKey} ${yl.cy} (\u20b9)</span>`;
+
+  const weekData = [];
+  for(let w=0; w<weekCount; w++){
+    const daysCY = weeksCY[w] || [];
+    const daysLY = weeksLY[w] || [];
+    const sumCY = daysCY.reduce((a,d)=> a + ((days26[String(d)]||{}).sales||0), 0);
+    const sumLY = daysLY.reduce((a,d)=> a + ((days25[String(d)]||{}).sales||0), 0);
+    const rangeCY = daysCY.length ? `${daysCY[0]}\u2013${daysCY[daysCY.length-1]}` : "";
+    const rangeLY = daysLY.length ? `${daysLY[0]}\u2013${daysLY[daysLY.length-1]}` : "";
+    weekData.push({ label:`Week ${w+1}`, rangeCY, rangeLY, sumCY, sumLY });
+  }
+
+  const maxVal = Math.max(1, ...weekData.flatMap(w=>[w.sumCY, w.sumLY]));
+  document.getElementById("weeklyChart").innerHTML = weekData.map(w=>{
+    const hA = Math.max(2, (w.sumLY/maxVal)*200);
+    const hB = Math.max(2, (w.sumCY/maxVal)*200);
+    const growth = w.sumLY>0 ? ((w.sumCY-w.sumLY)/w.sumLY*100) : null;
+    const gCls = growth==null ? "muted" : growth>=0 ? "pos" : "neg";
+    return `<div class="vbar-group">
+      <div class="vbar-pair">
+        <div class="vbar a" style="height:${hA}px;"><span class="vbar-num">${fmtInr(w.sumLY)}</span></div>
+        <div class="vbar b" style="height:${hB}px;"><span class="vbar-num">${fmtInr(w.sumCY)}</span></div>
+      </div>
+      <div class="vbar-lbl">${esc(w.label)}</div>
+      <div class="vbar-sublbl">${yl.ly}: ${esc(w.rangeLY||"\u2013")} &nbsp;|&nbsp; ${yl.cy}: ${esc(w.rangeCY||"\u2013")}</div>
+      <div class="vbar-growth ${gCls}">${growth==null?"N/A":fmtPct(growth)}</div>
+    </div>`;
+  }).join("") || `<p class="muted" style="font-size:12px;">No day-level data available for this month.</p>`;
+}
+
+// ---------------- Product category performance chart ----------------
+function renderProductCategoryChart(store, monthKey){
+  const rec = store.m[monthKey] || {};
+  const cat25 = rec.cat25 || {};
+  const cat26 = rec.cat26 || {};
+  const yl = yearLabels(monthKey);
+  document.getElementById("prodCatSub").textContent =
+    `${monthKey} ${yl.cy} vs ${monthKey} ${yl.ly}, by units sold \u2014 ${store.store} (Lounge Wear merged into Nightwear)`;
+  document.getElementById("prodCatLegend").innerHTML =
+    `<span><span class="legend-dot" style="background:var(--ice)"></span>${monthKey} ${yl.ly} (units)</span>` +
+    `<span><span class="legend-dot" style="background:var(--navy)"></span>${monthKey} ${yl.cy} (units)</span>`;
+
+  const allCats = Array.from(new Set([...Object.keys(cat25), ...Object.keys(cat26)]));
+  const rows = allCats.map(c => ({
+    category: c,
+    qty25: (cat25[c]||{}).qty || 0,
+    qty26: (cat26[c]||{}).qty || 0,
+  })).sort((a,b)=> b.qty26 - a.qty26).slice(0, 12);
+
+  if(!rows.length){
+    document.getElementById("prodCatChart").innerHTML = `<p class="muted" style="font-size:12px;">No category-level data available for this month.</p>`;
+    return;
+  }
+
+  const maxVal = Math.max(1, ...rows.flatMap(r=>[r.qty25, r.qty26]));
+  document.getElementById("prodCatChart").innerHTML = rows.map(r=>{
+    const hA = Math.max(2, (r.qty25/maxVal)*200);
+    const hB = Math.max(2, (r.qty26/maxVal)*200);
+    const growth = r.qty25>0 ? ((r.qty26-r.qty25)/r.qty25*100) : null;
+    const gCls = growth==null ? "muted" : growth>=0 ? "pos" : "neg";
+    return `<div class="vbar-group">
+      <div class="vbar-pair">
+        <div class="vbar a" style="height:${hA}px;"><span class="vbar-num">${fmtNum(r.qty25)}</span></div>
+        <div class="vbar b" style="height:${hB}px;"><span class="vbar-num">${fmtNum(r.qty26)}</span></div>
+      </div>
+      <div class="vbar-lbl">${esc(r.category)}</div>
+      <div class="vbar-growth ${gCls}">${growth==null?"N/A":fmtPct(growth)}</div>
+    </div>`;
+  }).join("");
+}
+
+function parseStaffTargetCSV(text){
+  const rows = parseCSV(text);
+  const hdrIdx = findHeaderRowIdx(rows, ["store"]);
+  if(hdrIdx === -1) throw new Error("Could not find a header row with a Store column.");
+  const header = rows[hdrIdx].map(c=>String(c).trim().toLowerCase());
+  const cStore = header.indexOf("store");
+  const cStaff = header.indexOf("staff name") >= 0 ? header.indexOf("staff name") : header.indexOf("staff");
+  const cMonth = header.indexOf("month");
+  const cTarget = header.indexOf("target") >= 0 ? header.indexOf("target") : header.indexOf("gross target");
+  if(cStaff === -1) throw new Error("Could not find a Staff Name (or Staff) column.");
+  if(cTarget === -1) throw new Error("Could not find a Target (or Gross Target) column.");
+  if(cMonth === -1) throw new Error("Could not find a Month column.");
+
+  const out = {}; // out[storeKey][monthKey][STAFFNAME] = target. Explicit 0 = manager marker; blank rows are skipped entirely.
+  for(let i=hdrIdx+1;i<rows.length;i++){
+    const r = rows[i];
+    if(!r[cStore] || !String(r[cStore]).trim()) continue;
+    const sKey = keyOf(r[cStore]);
+    const monthKey = monthKeyFromLabel(r[cMonth]);
+    const staffName = staffKeyOf(r[cStaff]);
+    if(!monthKey || !staffName) continue;
+    const rawTarget = r[cTarget]!=null ? String(r[cTarget]).trim() : "";
+    if(rawTarget === "") continue; // blank = not yet assigned, falls into normal equal split
+    const val = parseFloat(rawTarget);
+    if(isNaN(val)) continue; // invalid value, skip
+    out[sKey] = out[sKey] || {};
+    out[sKey][monthKey] = out[sKey][monthKey] || {};
+    out[sKey][monthKey][staffName] = val;
+  }
+  return out;
+}
+
+renderAll();
+
+// =====================================================================
+// ---------------- LIVE DATA: fetch straight from Google Sheets ----------------
+// =====================================================================
+
+const SALE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=1054702314&single=true&output=csv";
+const SALE_LY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=234205256&single=true&output=csv";
+const STORE_TYPE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=1866992180&single=true&output=csv";
+const STORE_TARGET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=311460288&single=true&output=csv";
+const STORE_TARGET_LY_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOgpraKVB0D1Ey0zuWSZQJ0JH23P2c9gEnWtlTPHYHHpi5m6iyyTZg3UaucUSG3ikv7-vXiqsm4WnW/pub?gid=108189863&single=true&output=csv";
+const LIVE_REFRESH_MS = 5 * 60 * 1000;
+
+function setLiveStatus(msg, color){
+  const el = document.getElementById("liveStatus");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.background = color || "rgba(255,255,255,0.12)";
+}
+
+async function fetchCsvLive(url){
+  const res = await fetch(url + (url.includes("?") ? "&" : "?") + "_=" + Date.now(), { cache: "no-store" });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  if(!text.trim()) throw new Error("No data returned.");
+  return text;
+}
+
+async function loadLiveData(){
+  const btn = document.getElementById("refreshLive");
+  if(btn) btn.disabled = true;
+  setLiveStatus("Connecting…");
+  try {
+
+  const results = await Promise.allSettled([
+    fetchCsvLive(SALE_URL), fetchCsvLive(SALE_LY_URL),
+    fetchCsvLive(STORE_TARGET_URL), fetchCsvLive(STORE_TARGET_LY_URL),
+    fetchCsvLive(STORE_TYPE_URL),
+  ]);
+  const [saleR, saleLyR, targetR, targetLyR, typeR] = results;
+  const failed = [];
+
+  let salesCY = { agg:{}, dayAgg:{}, staffAgg:{}, displayNames:{} };
+  let salesLY = { agg:{}, dayAgg:{}, staffAgg:{}, displayNames:{} };
+  let targetCY = { targets:{}, monthsFound:[], displayNames:{} };
+  let targetLY = { targets:{}, monthsFound:[], displayNames:{} };
+  let storeTypeMap = {};
+
+  try { if(saleR.status==="fulfilled") salesCY = parseSalesCSV(saleR.value); else failed.push("2026 Sale"); }
+  catch(e){ console.error("2026 Sale parse error", e); failed.push("2026 Sale"); }
+  try { if(saleLyR.status==="fulfilled") salesLY = parseSalesCSV(saleLyR.value); else failed.push("2025 Sale"); }
+  catch(e){ console.error("2025 Sale parse error", e); failed.push("2025 Sale"); }
+  try { if(targetR.status==="fulfilled") targetCY = parseTargetNarrowCSV(targetR.value); else failed.push("2026 Target"); }
+  catch(e){ console.error("2026 Target parse error", e); failed.push("2026 Target"); }
+  try { if(targetLyR.status==="fulfilled") targetLY = parseTargetNarrowCSV(targetLyR.value); else failed.push("2025 Target"); }
+  catch(e){ console.error("2025 Target parse error", e); failed.push("2025 Target"); }
+  try { if(typeR.status==="fulfilled") storeTypeMap = parseStoreTypeCSV(typeR.value); else failed.push("Store Type"); }
+  catch(e){ console.error("Store Type parse error", e); failed.push("Store Type"); }
+
+  mergeData(salesCY, salesLY, targetCY, targetLY, storeTypeMap);
+  renderAll();
+
+  if(btn) btn.disabled = false;
+  if(failed.length === results.length){
+    setLiveStatus("⚠ Connection failed", "#C23B2A");
+  } else if(failed.length){
+    setLiveStatus(`⚠ Live · ${failed.length} source(s) failed`, "#B8860B");
+  } else {
+    const now = new Date();
+    setLiveStatus(`● Live · ${now.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`, "rgba(30,158,99,0.35)");
+  }
+  } catch(loadErr){
+    console.error("Live data load failed:", loadErr);
+    setLiveStatus("⚠ Load error — see console", "#C23B2A");
+    if(btn) btn.disabled = false;
+  }
+}
+
+document.getElementById("refreshLive").addEventListener("click", loadLiveData);
+loadLiveData();
+setInterval(loadLiveData, LIVE_REFRESH_MS);
+
+} catch(outerErr) {
+  console.error("Dashboard fatal error:", outerErr);
+  document.body.insertAdjacentHTML("afterbegin",
+    `<div style="background:#FCEAE7;color:#C23B2A;padding:16px 40px;font-family:sans-serif;font-size:13px;">
+       Something went wrong rendering the dashboard: ${String(outerErr.message||outerErr)}
+     </div>`);
+}
+</script>
+</body>
+</html>
